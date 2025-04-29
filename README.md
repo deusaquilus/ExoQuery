@@ -183,10 +183,7 @@ That's right! You can use regular Kotlin constructs that you know and love in or
 ### *What is this `capture` thing?*
 ---
 
-The `capture` function is how ExoQuery knows whot code to capture inside of the Kotlin
-compiler plugin in order to be transformed into SQL. This is how ExoQuery is able to
-use regular Kotlin constructs like `if`, `when`, and `let` in the DSL. There are a few
-different kinds of things that you can capture:
+The `capture` function is the cornerstone of ExoQuery's functionality, acting as the bridge between Kotlin code and SQL generation. It identifies specific code blocks within the Kotlin compiler plugin that should be transformed into SQL queries. This powerful mechanism is what enables ExoQuery's distinctive ability to leverage standard Kotlin constructs—such as `if`, `when`, and `let`—directly within the query DSL. The capture function supports several different patterns and expressions, each serving specific query transformation needs:
 
 - A regular table-expression
   ```kotlin
