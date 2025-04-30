@@ -15,7 +15,6 @@ import io.exoquery.plugin.transform.containsBatchParam
 import io.exoquery.plugin.transform.isBatchParam
 import io.exoquery.xr.*
 import org.jetbrains.kotlin.ir.IrStatement
-import org.jetbrains.kotlin.ir.backend.js.utils.typeArguments
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.*

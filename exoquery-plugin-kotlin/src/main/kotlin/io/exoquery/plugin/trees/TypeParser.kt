@@ -16,7 +16,6 @@ import io.exoquery.plugin.transform.CX
 import io.exoquery.plugin.util.LruCache
 import io.exoquery.xr.XRType
 import org.jetbrains.kotlin.ir.IrElement
-import org.jetbrains.kotlin.ir.backend.js.utils.typeArguments
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.declarations.IrVariable

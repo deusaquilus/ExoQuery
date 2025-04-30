@@ -8,9 +8,9 @@ plugins {
   id("conventions")
   kotlin("multiplatform")
   id("com.android.library")
-  kotlin("plugin.serialization") version "2.1.0"
+  kotlin("plugin.serialization") version "2.1.20"
   id("io.kotest.multiplatform") version "6.0.0.M1"
-  id("io.exoquery.exoquery-plugin") version "2.1.0-2.0.0.PL"
+  id("io.exoquery.exoquery-plugin") version "2.1.20-2.0.0.PL"
   // Already on the classpath
   //id("org.jetbrains.kotlin.android") version "1.9.23"
 }

@@ -8,9 +8,9 @@ import org.jetbrains.kotlin.konan.target.HostManager
 plugins {
   id("conventions-multiplatform-nativeonly")
   kotlin("multiplatform")
-  kotlin("plugin.serialization") version "2.1.0"
+  kotlin("plugin.serialization") version "2.1.20"
   id("io.kotest.multiplatform") version "6.0.0.M1"
-  id("io.exoquery.exoquery-plugin") version "2.1.0-2.0.0.PL"
+  id("io.exoquery.exoquery-plugin") version "2.1.20-2.0.0.PL"
 }
 
 version = "1.2.0"

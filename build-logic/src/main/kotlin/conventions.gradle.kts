@@ -8,7 +8,7 @@ repositories {
   mavenCentral()
 }
 
-val kotlinVersion = "2.1.0"
+val kotlinVersion = "2.1.20"
 val pluginVersion = "1.1.2.PL"
 val extensionsVersion = "1.1.2"
 

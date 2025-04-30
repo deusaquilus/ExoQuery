@@ -3,7 +3,7 @@ import org.jetbrains.dokka.gradle.AbstractDokkaTask
 plugins {
   `maven-publish`
   signing
-  kotlin("multiplatform") version "2.1.0" apply false
+  kotlin("multiplatform") version "2.1.20" apply false
   id("com.android.library") version "8.2.0" apply false
   id("io.github.gradle-nexus.publish-plugin") version "1.1.0" apply false
   id("org.jetbrains.dokka") version "1.9.10" apply false
