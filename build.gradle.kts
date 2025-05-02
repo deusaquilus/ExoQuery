@@ -76,6 +76,26 @@ tasks.register("publishWindows") {
   dependsOn(*targets.toTypedArray())
 }
 
+
+tasks.register("publishLinuxNoRunner") {
+  dependsOn(
+    gradle.includedBuild(Release.Project.`exoquery-engine`).task(":publishAllPublicationsToOssRepository"),
+    gradle.includedBuild(Release.Project.`exoquery-plugin-gradle`).task(":publish"),
+    gradle.includedBuild(Release.Project.`exoquery-plugin-kotlin`).task(":publish"),
+  )
+}
+tasks.register("publishMacNoRunner") {
+  Release.macBuildCommands.forEach {
+    dependsOn(gradle.includedBuild(Release.Project.`exoquery-engine`).task(":$it"))
+  }
+}
+tasks.register("publishWindowsNoRunner") {
+  Release.windowsBuildCommands.forEach {
+    dependsOn(gradle.includedBuild(Release.Project.`exoquery-engine`).task(":$it"))
+  }
+}
+
+
 object Release {
 
   object Project {

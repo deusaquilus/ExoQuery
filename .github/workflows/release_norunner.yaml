@@ -1,0 +1,57 @@
+name: Release_NoRunner
+
+on:
+  workflow_dispatch
+
+jobs:
+  create_staging_repository:
+    runs-on: ubuntu-latest
+    name: Create staging repository
+    outputs:
+      repository_id: ${{ steps.create.outputs.repository_id }}
+    steps:
+      - id: create
+        uses: nexus-actions/create-nexus-staging-repo@main
+        with:
+          username: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEUSERNAME }}
+          password: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEPASSWORD }}
+          staging_profile_id: ${{ secrets.SONATYPE_PROFILE_ID }}
+          # Defaults to the https://oss.sonatype.org, not https://s01.oss.sonatype.org
+          base_url: https://s01.oss.sonatype.org/service/local/
+          description: ${{ github.repository }}/${{ github.workflow }}#${{ github.run_number }}
+
+  release:
+    needs: [ create_staging_repository ]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macOS-latest, windows-latest ]
+    env:
+      SONATYPE_REPOSITORY_ID: ${{ needs.create_staging_repository.outputs.repository_id }}
+      SONATYPE_USERNAME: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEUSERNAME }}
+      SONATYPE_PASSWORD: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEPASSWORD }}
+      NEW_SIGNING_KEY_ID_BASE64: ${{ secrets.NEW_SIGNING_KEY_ID_BASE64 }}
+      NEW_SIGNING_KEY_ID_BASE64_PASS: ${{ secrets.NEW_SIGNING_KEY_ID_BASE64_PASS }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'adopt'
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v3
+
+      - name: 'Run Jdbc, Android, and Native-Linux Tests'
+        if: matrix.os == 'ubuntu-latest'
+        run: >-
+          docker compose build && docker compose run --rm --service-ports setup && 
+          ./gradlew build publishLinuxNoRunner -PisCI --no-daemon --stacktrace --warning-mode all
+
+      - name: 'Run MacOS Tests'
+        if: matrix.os == 'macOS-latest'
+        run: ./gradlew :exoquery-runner-native:build publishMacNoRunner -PisCI --no-daemon --stacktrace --warning-mode all
+
+      - name: 'Run windows tests'
+        if: matrix.os == 'windows-latest'
+        run: ./gradlew :exoquery-runner-native:mingwX64Test publishWindowsNoRunner -PisCI --no-daemon --stacktrace --warning-mode all
