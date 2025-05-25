@@ -18,11 +18,41 @@ object QueryReqGoldenDynamic: GoldenQueryFile {
     "query with map" to cr(
       "SELECT p.name AS value FROM Person p"
     ),
+    "union with pure function - should collapse/XR" to kt(
+      "Table(Person).filter { p -> p.name == Joe }.union(Table(Person).filter { p -> p.name == Jack }).map { p -> p.name }"
+    ),
+    "union with pure function - should collapse" to cr(
+      "SELECT p.name AS value FROM ((SELECT p.id, p.name, p.age FROM Person p WHERE p.name = 'Joe') UNION (SELECT p1.id, p1.name, p1.age FROM Person p1 WHERE p1.name = 'Jack')) AS p"
+    ),
+    "union with aggregation - shuold not collapse/XR" to kt(
+      "Table(Person).filter { p -> p.name == Joe }.union(Table(Person).filter { p -> p.name == Jack }).map { p -> avg_GC(p.age) }"
+    ),
+    "union with aggregation - shuold not collapse" to cr(
+      "SELECT avg(p.age) AS value FROM ((SELECT p.id, p.name, p.age FROM Person p WHERE p.name = 'Joe') UNION (SELECT p1.id, p1.name, p1.age FROM Person p1 WHERE p1.name = 'Jack')) AS p"
+    ),
     "map with aggregation/XR" to kt(
       "Table(Person).map { p -> avg_GC(p.age) }"
     ),
     "map with aggregation" to cr(
       "SELECT avg(p.age) AS value FROM Person p"
+    ),
+    "map with count/XR" to kt(
+      "Table(Person).map { p -> count_GC(p.age) }"
+    ),
+    "map with count" to cr(
+      "SELECT count(p.age) AS value FROM Person p"
+    ),
+    "map with count star/XR" to kt(
+      "Table(Person).map { p -> COUNT(*)_GC() }"
+    ),
+    "map with count star" to cr(
+      "SELECT COUNT(*)() AS value FROM Person p"
+    ),
+    "map with count distinct/XR" to kt(
+      "Table(Person).map { p -> count_GC(DISTINCT_GC(p.name, p.age)) }"
+    ),
+    "map with count distinct" to cr(
+      "SELECT count(DISTINCT p.name, p.age) AS value FROM Person p"
     ),
     "map with stddev/XR" to kt(
       "Table(Person).map { p -> stddev_GC(p.age) }"

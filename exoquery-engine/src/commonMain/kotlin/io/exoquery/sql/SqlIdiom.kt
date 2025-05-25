@@ -17,6 +17,14 @@ import io.exoquery.xr.XR.ParamType
 import io.exoquery.xrError
 
 interface SqlIdiom : HasPhasePrinting {
+  companion object {
+    val DefaultMethodMappings =
+      mapOf(
+        XR.FqName("lowercase") to "LOWER",
+        XR.FqName("uppercase") to "UPPER",
+        XR.FqName("length") to "LEN"
+      )
+  }
 
   override val traceType: TraceType get() = TraceType.SqlNormalizations
   abstract val useActionTableAliasAs: ActionTableAliasBehavior
@@ -166,7 +174,7 @@ interface SqlIdiom : HasPhasePrinting {
     val partitionTok = if (partitionBy.isNotEmpty()) +"PARTITION BY ${partitionBy.mkStmt()}" else +""
     val orderTok = if (orderBy.isNotEmpty()) +"ORDER BY ${orderBy.mkStmt()}" else +""
     val spaceTok = if (partitionBy.isNotEmpty() && orderBy.isNotEmpty()) +" " else +""
-    +"${frameTok} OVER (${partitionTok}${spaceTok}${orderTok})"
+    +"${frameTok} OVER(${partitionTok}${spaceTok}${orderTok})"
   }
 
   // All previous sanitization focused on doing things like removing "<" and ">" from variables like "<init>"
@@ -300,6 +308,7 @@ interface SqlIdiom : HasPhasePrinting {
     }
   }
 
+  val methodMappings: Map<XR.FqName, String> get() = DefaultMethodMappings
 
   val XR.GlobalCall.token
     get(): Token = run {
@@ -308,8 +317,12 @@ interface SqlIdiom : HasPhasePrinting {
       // In this case for now we want to just assume SQL will do an implicit cast. May want to change this in the future.
       if (this.name == XR.FqName.Cast && args.size == 1)
         argsToken
-      else
-        +"${name.name}(${argsToken})"
+      else if (this.name == XR.FqName.Distinct)
+        +"${name.name} ${argsToken}"
+      else {
+        val functionName = methodMappings[this.name] ?: this.name.name
+        +"${functionName}(${argsToken})"
+      }
     }
 
 

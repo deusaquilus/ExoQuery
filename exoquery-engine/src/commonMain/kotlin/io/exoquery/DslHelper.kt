@@ -4,9 +4,10 @@ import io.exoquery.annotation.WindowFun
 import io.exoquery.annotation.Dsl
 
 interface WindowDsl {
-  fun sortBy(order: Any?): WindowDsl
-  fun sortByDescending(order: Any?): WindowDsl
-  fun sortBy(vararg orders: Pair<Any?, Ord?>): WindowDsl
+
+  fun orderBy(order: Any?): WindowDsl
+  fun orderByDescending(order: Any?): WindowDsl
+  fun orderBy(vararg orders: Pair<Any?, Ord?>): WindowDsl
 
   fun partitionBy(vararg statement: Any?): WindowDsl
 
@@ -36,6 +37,10 @@ interface WindowDsl {
   @WindowFun("COUNT")
   fun count(expression: Any?): Int
 
+  @Dsl
+  @WindowFun("COUNT(*)")
+  fun count(): Int
+
   @Dsl @WindowFun("LAG")
   fun <T> lag(expression: T): T
   @Dsl @WindowFun("LEAD")
@@ -51,4 +56,11 @@ interface WindowDsl {
   @Dsl @WindowFun("NTILE")
   fun ntile(expression: Any?): Double
 
+
+  /** Synonym for orderBy */
+  fun sortBy(order: Any?): WindowDsl
+  /** Synonym for orderByDescending */
+  fun sortByDescending(order: Any?): WindowDsl
+  /** Synonym for orderBy */
+  fun sortBy(vararg orders: Pair<Any?, Ord?>): WindowDsl
 }

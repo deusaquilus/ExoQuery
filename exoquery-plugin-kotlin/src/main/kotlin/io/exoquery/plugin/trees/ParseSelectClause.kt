@@ -15,6 +15,7 @@ import io.exoquery.plugin.transform.CX
 import io.exoquery.xr.SX
 import io.exoquery.xr.SelectClause
 import io.exoquery.xr.XR
+import io.exoquery.xr.of
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.expressions.IrReturn
@@ -106,7 +107,7 @@ object ParseSelectClause {
         }
       },
       // sortBy(...Pair<*, Ord>)
-      case(Ir.Call.FunctionMemVararg[ExtractorsDomain.IsSelectFunction(), Is("sortBy"), Ir.Type.ClassOfType<Pair<*, *>>(), Is()]).thenThis { _, argValues ->
+      case(Ir.Call.FunctionMemVararg[ExtractorsDomain.IsSelectFunction(), Is.of("sortBy", "orderBy"), Ir.Type.ClassOfType<Pair<*, *>>(), Is()]).thenThis { _, argValues ->
         val clausesRaw = argValues.map { ParseOrder.parseOrdTuple(it) }
         SX.SortBy(clausesRaw.map { (expr, ord) -> XR.OrderField.By(expr, ord) }, this.loc)
       },

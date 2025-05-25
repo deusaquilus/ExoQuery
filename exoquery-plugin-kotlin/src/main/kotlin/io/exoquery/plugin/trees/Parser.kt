@@ -102,12 +102,23 @@ object CallParser {
       else
         TypeParser.of(expr)
 
+    val (callType, nameOverride) = expr.extractCallType()
+
+    // It's possible for global/method calls to have vararg values arguments this recurses on those cases
+    fun extractArgs(args: List<IrExpression?>): List<XR.U.QueryOrExpression> =
+      args.flatMap { arg ->
+        when (arg) {
+          is IrVararg -> extractArgs(arg.varargValues())
+          else -> listOf(arg?.let { Parser.parseArg(it) } ?: XR.Const.Null())
+        }
+      }
+
     return when {
       reciever == null || reciever.type.isClass<CapturedBlock>() ->
         XR.GlobalCall(
-          name = expr.symbol.owner.kotlinFqName.toXR(),
-          args = expr.simpleValueArgs.map { arg -> arg?.let { Parser.parseArg(it) } ?: XR.Const.Null() },
-          callType = expr.extractCallType(),
+          name = nameOverride?.let { XR.FqName(it) } ?:  expr.symbol.owner.kotlinFqName.toXR(),
+          args = extractArgs(expr.simpleValueArgs),
+          callType = callType,
           type = tpe,
           isKotlinSynthetic = false,
           loc = expr.loc
@@ -115,26 +126,33 @@ object CallParser {
       else ->
         XR.MethodCall(
           head = Parser.parseArg(reciever),
-          name = expr.symbol.safeName,
-          args = expr.simpleValueArgs.map { arg -> arg?.let { Parser.parseArg(it) } ?: XR.Const.Null() },
+          name = nameOverride ?: expr.symbol.safeName,
+          args = extractArgs(expr.simpleValueArgs),
           originalHostType = expr.type.classId()?.toXR() ?: XR.ClassId.Empty,
           type = tpe,
           loc = expr.loc,
           isKotlinSynthetic = reciever.hasSameOffsetsAs(expr),
-          callType = expr.extractCallType()
+          callType = callType
         )
     }
   }
 
   context(CX.Scope, CX.Parsing, CX.Symbology)
-  private fun IrCall.extractCallType(): XR.CallType {
+  private fun IrCall.extractCallType(): Pair<XR.CallType, String?> {
+    val annotationArgs = this.symbol.owner.getAnnotationArgs<DslFunctionCall>()
     val arg =
-      (this.symbol.owner.getAnnotationArgs<DslFunctionCall>().firstOrNull() ?: parseError("Could not find DslFunctionCall annotation", this))
+      (annotationArgs.firstOrNull() ?: parseError("Could not find DslFunctionCall annotation", this))
           as? IrClassReference ?: parseError("DslFunctionCall annotation must have a single argument that is a class-reference (e.g. PureFunction::class)", this)
     val argXR =
       arg.classType.classFqName?.shortName()?.asString()?.let { XR.CallType.fromClassString(it) }
         ?: parseError("Could not parse CallType from: ${arg.dumpKotlinLike()}", arg)
-    return argXR
+
+    // Get the 2nd arg
+    val nameOverride =
+      // Technically if it's not specified in the IR it will be null but let's check for "" anyway
+      annotationArgs.getOrNull(1)?.let { it as? IrConst }?.value?.toString()?.let { it.ifEmpty { null } }
+
+    return argXR to nameOverride
   }
 
 

@@ -12,7 +12,7 @@ object MethodWhitelist {
 
   private val data: List<HostMethods> =
     listOf(
-      HostMethods(classIdOrFail<String>("String"), listOf("substring"))
+      HostMethods(classIdOrFail<String>("String"), listOf("substring", "uppercase", "lowercase", "length"))
     )
 
   private val dataMap = data.map { it.host to it.allowedMethods }.toMap()

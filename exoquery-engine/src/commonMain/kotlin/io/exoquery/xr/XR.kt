@@ -245,10 +245,11 @@ sealed interface XR {
 
     companion object {
       operator fun invoke(fullPath: String): FqName =
-        FqName(fullPath.split('.').map { it.lowercase() })
+        FqName(fullPath.split('.'))
 
       val Empty = FqName(listOf())
       val Cast = FqName(listOf("kotlinCast"))
+      val Distinct = FqName(listOf("DISTINCT"))
     }
 
     private val str by lazy { path.joinToString(".") }

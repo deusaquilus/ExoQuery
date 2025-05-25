@@ -7,7 +7,7 @@ import io.exoquery.sql.PostgresDialect
 // Also note that it won't actually override the BasicQuerySanitySpecGolden file unless you change this one
 
 // build the file BasicQuerySanitySpecGolden.kt, is that as the constructor arg
-class QueryReq: GoldenSpecDynamic(QueryReqGoldenDynamic, Mode.ExoGoldenTest(), {
+class QueryReq: GoldenSpecDynamic(QueryReqGoldenDynamic, Mode.ExoGoldenOverride(), {
   data class Person(val id: Int, val name: String, val age: Int)
   data class Address(val ownerId: Int, val street: String, val city: String)
 
@@ -21,8 +21,38 @@ class QueryReq: GoldenSpecDynamic(QueryReqGoldenDynamic, Mode.ExoGoldenTest(), {
     shouldBeGolden(people.xr, "XR")
     shouldBeGolden(people.build<PostgresDialect>())
   }
+  // TODO should collpase, look into applyMap
+  "union with pure function - should collapse" {
+    val joes = capture { Table<Person>().filter { p -> p.name == "Joe" } }
+    val jacks = capture { Table<Person>().filter { p -> p.name == "Jack" } }
+    val people = capture { (joes union jacks).map { p -> p.name } } //.uppercase()
+    shouldBeGolden(people.xr, "XR")
+    shouldBeGolden(people.build<PostgresDialect>())
+  }
+  "union with aggregation - shuold not collapse" {
+    val joes = capture { Table<Person>().filter { p -> p.name == "Joe" } }
+    val jacks = capture { Table<Person>().filter { p -> p.name == "Jack" } }
+    val people = capture { (joes union jacks).map { p -> avg(p.age) } }
+    shouldBeGolden(people.xr, "XR")
+    shouldBeGolden(people.build<PostgresDialect>())
+  }
   "map with aggregation" {
     val people = capture { Table<Person>().map { p -> avg(p.age) } }
+    shouldBeGolden(people.xr, "XR")
+    shouldBeGolden(people.build<PostgresDialect>())
+  }
+  "map with count" {
+    val people = capture { Table<Person>().map { p -> count(p.age) } }
+    shouldBeGolden(people.xr, "XR")
+    shouldBeGolden(people.build<PostgresDialect>())
+  }
+  "map with count star" {
+    val people = capture { Table<Person>().map { p -> count() } }
+    shouldBeGolden(people.xr, "XR")
+    shouldBeGolden(people.build<PostgresDialect>())
+  }
+  "map with count distinct" {
+    val people = capture { Table<Person>().map { p -> count(distinct(p.name, p.age)) } }
     shouldBeGolden(people.xr, "XR")
     shouldBeGolden(people.build<PostgresDialect>())
   }

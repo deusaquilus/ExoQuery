@@ -1,5 +1,6 @@
 package io.exoquery.sql
 
+import io.exoquery.sql.SqlIdiom.Companion.DefaultMethodMappings
 import io.exoquery.util.TraceConfig
 import io.exoquery.util.Tracer
 import io.exoquery.util.unaryPlus
@@ -21,6 +22,10 @@ class MySqlDialect(override val traceConf: TraceConfig = TraceConfig.empty) : Sq
       else -> super.xrBinaryOpTokenImpl(binaryOpImpl)
     }
   }
+
+  // TODO replace LEN with LENGTH
+  override val methodMappings: Map<XR.FqName, String> =
+    DefaultMethodMappings
 
   override fun xrOrderByCriteriaTokenImpl(orderByCriteriaImpl: XR.OrderField): Token = with(orderByCriteriaImpl) {
     when {

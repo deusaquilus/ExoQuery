@@ -58,7 +58,7 @@ sealed interface DslFunctionCallType {
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
-annotation class DslFunctionCall(val type: KClass<out DslFunctionCallType>)
+annotation class DslFunctionCall(val type: KClass<out DslFunctionCallType>, val name: String = "")
 
 @Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY, AnnotationTarget.PROPERTY_GETTER)
 @Retention(AnnotationRetention.BINARY)

@@ -32,17 +32,17 @@ object ParseWindow {
         head.copy(partitionBy = partitions)
       },
       // Match the variadic one first since the others are expr and would need you to check the function-type otherwise
-      case(Ir.Call.FunctionMem1[Is(), Is("sortBy"), Ir.Vararg[Is()]]).thenThis { head, (orderXbyY) ->
+      case(Ir.Call.FunctionMem1[Is(), Is.of("sortBy", "orderBy"), Ir.Vararg[Is()]]).thenThis { head, (orderXbyY) ->
         val head = parse(head)
         val orders = orderXbyY.map { ParseOrder.parseOrdTuple(it) }.map { (expr, ord) -> XR.OrderField.By(expr, ord) }
         head.copy(orderBy = orders)
       },
-      case(Ir.Call.FunctionMem1[Is(), Is("sortBy"), Is()]).thenThis { head, orderExpr ->
+      case(Ir.Call.FunctionMem1[Is(), Is.of("sortBy", "orderBy"), Is()]).thenThis { head, orderExpr ->
         val head = parse(head)
         val order = ParseExpression.parse(orderExpr)
         head.copy(orderBy = listOf(XR.OrderField.Implicit(order)))
       },
-      case(Ir.Call.FunctionMem1[Is(), Is("sortByDescending"), Is()]).thenThis { head, orderExpr ->
+      case(Ir.Call.FunctionMem1[Is(), Is.of("sortByDescending", "orderByDescending"), Is()]).thenThis { head, orderExpr ->
         val head = parse(head)
         val order = ParseExpression.parse(orderExpr)
         head.copy(orderBy = listOf(XR.OrderField.Implicit(order)))
@@ -148,6 +148,7 @@ object ParseExpression {
           XR.MethodCall(parse(head), method, emptyList(), XR.CallType.PureFunction, classId.toXR(), isKotlinSynthetic, XRType.Value, expr.loc)
         },
 
+      // TODO cannot assume all whitelisted methods are pure functions. Need to introduce purity/impurity to the whitelist
       case(Ir.Call.FunctionMemN[Is { it.type.classId()?.let { MethodWhitelist.allowedHost(it) } ?: false }, Is(), Is()])
         .thenIfThis { _, _ -> MethodWhitelist.allowedMethodForHost(this.type.classId(), funName) }
         .thenThis { head, args ->
