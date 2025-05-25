@@ -810,7 +810,7 @@ sealed interface XR {
     @Transient
     private val cid = id()
     override fun hashCode(): Int = cid.hashCode()
-    override fun equals(other: Any?): Boolean = other is Ident && other.id() == cid
+    override fun equals(other: Any?): Boolean = other is Window && other.id() == cid
   }
 
 

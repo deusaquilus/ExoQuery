@@ -367,6 +367,7 @@ data class BetaReduction(val map: Map<QueryOrExpression, QueryOrExpression>, val
         // sure to return the actual AST that was matched as opposed to the one passed in.
         reducedAst == ast -> reducedAst
         // Perform an additional beta reduction on the reduced XR since it may not have been fully reduced yet
+        // TODO add a recursion guard here?
         else -> invokeTyped<X>(reducedAst, mapOf<QueryOrExpression, QueryOrExpression>(), typeBehavior, emptyBehavior, astLevelInvoker)
       }
     }

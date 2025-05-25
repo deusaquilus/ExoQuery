@@ -162,11 +162,11 @@ interface SqlIdiom : HasPhasePrinting {
   fun xrWindowTokenImpl(windowImpl: XR.Window) = with(windowImpl) {
     val partitionBy = partitionBy.map { it.token }
     val orderBy = orderBy.map { it.token }
-    val frame = over?.let { " ${it.token}" } ?: ""
-    val partition = if (partitionBy.isNotEmpty()) "PARTITION BY ${partitionBy.mkStmt()}" else ""
-    val order = if (orderBy.isNotEmpty()) "ORDER BY ${orderBy.mkStmt()}" else ""
-    val space = if (partition.isNotEmpty() && order.isNotEmpty()) " " else ""
-    +"${frame.token} OVER (${partition}${space}${order})"
+    val frameTok = over.token
+    val partitionTok = if (partitionBy.isNotEmpty()) +"PARTITION BY ${partitionBy.mkStmt()}" else +""
+    val orderTok = if (orderBy.isNotEmpty()) +"ORDER BY ${orderBy.mkStmt()}" else +""
+    val spaceTok = if (partitionBy.isNotEmpty() && orderBy.isNotEmpty()) +" " else +""
+    +"${frameTok} OVER (${partitionTok}${spaceTok}${orderTok})"
   }
 
   // All previous sanitization focused on doing things like removing "<" and ">" from variables like "<init>"
@@ -187,33 +187,6 @@ interface SqlIdiom : HasPhasePrinting {
    * Now on an SQL level we don't
    */
   val XR.QueryToExpr.token get(): Token = +"(${head.token})"
-
-  fun tokenizeMethodCallFqName(name: XR.FqName): Token =
-  // TODO this should be per dialect, maybe even configureable. I.e. every dialect should have it's supported MethodCall functions
-  //      this list of method-names should techinically be available to the parser when it is parsing so appropriate
-    //      cannot-parse exceptions will be thrown if it is not. We could also introduce a "Promiscuous-Parser" mode where that is disabled.
-    when {
-      name.name == "split" -> "split".token
-      name.name == "startsWith" -> "startsWith".token
-      name.name == "split" -> "split".token
-      name.name == "toUpperCase" -> "toUpperCase".token
-      name.name == "toLowerCase" -> "toLowerCase".token
-      name.name == "toLong" -> "toLong".token
-      name.name == "toInt" -> "toInt".token
-      else -> throw IllegalArgumentException("Unknown method: ${name.toString()}")
-    }
-
-  fun tokenizeGlobalCallFqName(name: XR.FqName): Token =
-    // TODO this should be per dialect, maybe even configureable. I.e. every dialect should have it's supported MethodCall functions
-    when {
-      name.name == "min" -> "min".token
-      name.name == "max" -> "max".token
-      name.name == "avg" -> "avg".token
-      name.name == "stddev" -> "stddev".token
-      name.name == "sum" -> "sum".token
-      name.name == "size" -> "size".token
-      else -> throw IllegalArgumentException("Unknown global method: ${name.toString()}")
-    }
 
   fun stringStartsWith(str: XR.U.QueryOrExpression, prefix: XR.U.QueryOrExpression): Token =
     +"starts_with(${str.token}, ${prefix.token})"
