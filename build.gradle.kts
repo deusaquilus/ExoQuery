@@ -36,7 +36,7 @@ tasks.register("publishLinux") {
 }
 
 tasks.register("publishLinuxLocal") {
-  ":${Release.Project.`exoquery-engine`}:publishToMavenLocal"
+  ":${Release.Project.`exoquery-engine`}:publishToMavenLocal" // should this first clause even be here?
   dependsOn(
     gradle.includedBuild(Release.Project.`exoquery-engine`).task(":publishToMavenLocal"),
     gradle.includedBuild(Release.Project.`exoquery-plugin-gradle`).task(":publishToMavenLocal"),

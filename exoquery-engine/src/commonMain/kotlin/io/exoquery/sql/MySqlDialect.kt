@@ -22,12 +22,13 @@ class MySqlDialect(override val traceConf: TraceConfig = TraceConfig.empty) : Sq
     }
   }
 
-  override fun xrOrderByCriteriaTokenImpl(orderByCriteriaImpl: OrderByCriteria): Token = with(orderByCriteriaImpl) {
-    when (this.ordering) {
-      XR.Ordering.AscNullsFirst -> +"${ast.token} ASC"
-      XR.Ordering.DescNullsFirst -> +"ISNULL(${ast.token}) DESC, ${ast.token} DESC"
-      XR.Ordering.AscNullsLast -> +"ISNULL(${ast.token}) ASC, ${ast.token} ASC"
-      XR.Ordering.DescNullsLast -> +"${ast.token} DESC"
+  override fun xrOrderByCriteriaTokenImpl(orderByCriteriaImpl: XR.OrderField): Token = with(orderByCriteriaImpl) {
+    when {
+      orderingOpt == null -> field.token
+      orderingOpt == XR.Ordering.AscNullsFirst -> +"${field.token} ASC"
+      orderingOpt == XR.Ordering.DescNullsFirst -> +"ISNULL(${field.token}) DESC, ${field.token} DESC"
+      orderingOpt == XR.Ordering.AscNullsLast -> +"ISNULL(${field.token}) ASC, ${field.token} ASC"
+      orderingOpt == XR.Ordering.DescNullsLast -> +"${field.token} DESC"
       else -> super.xrOrderByCriteriaTokenImpl(orderByCriteriaImpl)
     }
   }

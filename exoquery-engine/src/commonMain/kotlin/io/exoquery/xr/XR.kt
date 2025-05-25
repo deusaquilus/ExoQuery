@@ -245,7 +245,7 @@ sealed interface XR {
 
     companion object {
       operator fun invoke(fullPath: String): FqName =
-        FqName(fullPath.split('.'))
+        FqName(fullPath.split('.').map { it.lowercase() })
 
       val Empty = FqName(listOf())
       val Cast = FqName(listOf("kotlinCast"))
@@ -324,7 +324,7 @@ sealed interface XR {
 
   @Serializable
   @Mat
-  data class SortBy(@Slot val head: XR.Query, @MSlot val id: XR.Ident, @Slot val criteria: XR.Expression, @CS val ordering: XR.Ordering, override val loc: Location = Location.Synth) : Query, PC<SortBy> {
+  data class SortBy(@Slot val head: XR.Query, @MSlot val id: XR.Ident, @Slot val criteria: List<OrderField>, override val loc: Location = Location.Synth) : Query, PC<SortBy> {
     @Transient
     override val productComponents = productOf(this, head, id, criteria)
     override val type get() = head.type
@@ -338,16 +338,28 @@ sealed interface XR {
     override fun equals(other: Any?): Boolean = other is SortBy && other.id() == cid
   }
 
+  // OrderField elements are technically not part of the XR but closely related
+  @Serializable
+  sealed interface OrderField {
+    @Serializable data class By(override val field: XR.Expression, val ordering: XR.Ordering) : OrderField
+    @Serializable data class Implicit(override val field: XR.Expression) : OrderField
+
+    val orderingOpt get() = when (this) {
+      is By -> ordering
+      is Implicit -> null
+    }
+    val field: XR.Expression
+    fun transform(transform: (XR.Expression) -> XR.Expression): OrderField =
+      when (this) {
+        is By -> By(transform(field), ordering)
+        is Implicit -> Implicit(transform(field))
+      }
+  }
+
   // Ordering elements are technically not part of the XR but closely related
+  // TODO Clean-Up. Only need PropertyOrdering now. Got rid of tuple-ordering
   @Serializable
   sealed interface Ordering {
-    @Serializable
-    data class TupleOrdering(val elems: List<Ordering>) : Ordering {
-      companion object {
-        fun of(vararg elems: Ordering): TupleOrdering = TupleOrdering(elems.toList())
-      }
-    }
-
     @Serializable
     sealed interface PropertyOrdering : Ordering
     @Serializable
@@ -497,10 +509,10 @@ sealed interface XR {
 
   @Serializable
   @Mat
-  data class FlatSortBy(@Slot val by: XR.Expression, @CS val ordering: XR.Ordering, override val loc: Location = Location.Synth) : Query, U.FlatUnit, PC<FlatSortBy> {
+  data class FlatSortBy(@Slot val criteria: List<XR.OrderField>, override val loc: Location = Location.Synth) : Query, U.FlatUnit, PC<FlatSortBy> {
     @Transient
-    override val productComponents = productOf(this, by)
-    override val type get() = by.type
+    override val productComponents = productOf(this, criteria)
+    override val type get() = XRType.Unknown
 
     companion object {}
 
@@ -784,6 +796,21 @@ sealed interface XR {
 
     override fun isPure() = callType.isPure
     override fun isAggregation() = callType == CallType.Aggregator
+  }
+
+
+  @Serializable
+  @Mat
+  data class Window(@Slot val partitionBy: List<XR.Expression>, @MSlot val orderBy: List<XR.OrderField>, @Slot val over: XR.Expression, override val loc: Location = Location.Synth) : XR.Expression, PC<Window> {
+    @Transient
+    override val productComponents = productOf(this, partitionBy, orderBy, over)
+
+    override val type: XRType = over.type
+
+    @Transient
+    private val cid = id()
+    override fun hashCode(): Int = cid.hashCode()
+    override fun equals(other: Any?): Boolean = other is Ident && other.id() == cid
   }
 
 

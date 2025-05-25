@@ -21,6 +21,7 @@ class ApplyMap(val traceConfig: TraceConfig) {
       CollectXR.invoke(this) {
         when {
           this is Free && this.pure == false -> this
+          this is XR.Window -> this
           else -> null
         }
       }.isNotEmpty()
@@ -30,6 +31,8 @@ class ApplyMap(val traceConfig: TraceConfig) {
         when {
           this is Free && this.pure == false -> this
           this is XR.U.Call && !this.isPure() -> this
+          // Window functions absolutely cannot be collapsed
+          this is XR.Window -> this
           else -> null
         }
       }.isNotEmpty()
@@ -166,9 +169,9 @@ class ApplyMap(val traceConfig: TraceConfig) {
 
       // a.map(b => c).sortBy(d => e) =>
       //    a.sortBy(b => e[d := c]).map(b => c)
-      case(XR.SortBy[DetachableMap[Is(), Is()], Is()]).then { (a, b, c), d, e ->
-        val er = BetaReduction(e, d to c).asExpr()
-        trace("ApplyMap inside sortBy for $q") andReturn { XR.Map.csf(XR.SortBy.csf(a, b, er, comp.ordering)(comp), b, c)(compLeft) }
+      case(XR.SortBy[DetachableMap[Is(), Is()], Is()]).then { (a, b, c), d, ords ->
+        val ordsA = ords.map { ord -> ord.transform { BetaReduction(it, d to c).asExpr() } }
+        trace("ApplyMap inside sortBy for $q") andReturn { XR.Map.csf(XR.SortBy.csf(a, b, ordsA)(comp), b, c)(compLeft) }
       },
 
       // TODO This is not in Quill. Is it valid?
@@ -187,9 +190,9 @@ class ApplyMap(val traceConfig: TraceConfig) {
 
       // a.map(b => c).sortBy(d => e).distinct =>
       //    a.sortBy(b => e[d := c]).map(b => c).distinct
-      case(XR.SortBy.DistinctHead[DetachableMap[Is(), Is()], Is()]).then { (a, b, c), d, e ->
-        val er = BetaReduction(e, d to c).asExpr()
-        trace("ApplyMap inside sortBy+distinct for $q") andReturn { XR.Distinct(XR.Map.csf(XR.SortBy.csf(a, b, er, comp.ordering)(comp), b, c)(compLeft)) }
+      case(XR.SortBy.DistinctHead[DetachableMap[Is(), Is()], Is()]).then { (a, b, c), d, ords ->
+        val ordsA = ords.map { ord -> ord.transform { BetaReduction(it, d to c).asExpr() } }
+        trace("ApplyMap inside sortBy+distinct for $q") andReturn { XR.Distinct(XR.Map.csf(XR.SortBy.csf(a, b, ordsA)(comp), b, c)(compLeft)) }
       },
 
 

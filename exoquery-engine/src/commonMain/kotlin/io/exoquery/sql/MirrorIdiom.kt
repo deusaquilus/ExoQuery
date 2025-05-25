@@ -218,6 +218,9 @@ class MirrorIdiom(val renderOpts: RenderOptions = RenderOptions()) {
         is XR.Ident -> this.token
         is XR.Free -> this.token
         is XR.Const -> this.token
+
+        is XR.Window -> stmt("window().partitionBy(${partitionBy.map { it.token }.mkStmt(", ")}).orderBy(${orderBy.map { it.token }.mkStmt(", ")}).over(${over.token})")
+
         // scala: stmt"${name.token}(${values.map { case (k, v) -> s"${k.token}: ${v.token}" }.mkString(", ").token})"
         is XR.Product ->
           // TODO should have a 'showFieldNames' setting to disable display of field-names in products
@@ -235,6 +238,13 @@ class MirrorIdiom(val renderOpts: RenderOptions = RenderOptions()) {
   private val String.lastPart get() = this.split('.').last()
 
 
+  val XR.OrderField.token: Token
+    get() =
+      when (this) {
+        is XR.OrderField.By -> stmt("${field.token} to ${ordering.token}")
+        is XR.OrderField.Implicit -> stmt("${field.token}")
+      }
+
   val XR.Query.token: Token
     get() =
       when (this) {
@@ -249,7 +259,7 @@ class MirrorIdiom(val renderOpts: RenderOptions = RenderOptions()) {
         is XR.ConcatMap ->
           stmt("${head.token}.concatMap { ${id.token} -> ${body.token} }")
         is XR.SortBy ->
-          stmt("${head.token}.sortBy(${ordering.token}) { ${id.token} -> ${criteria.token} }")
+          stmt("${head.token}.sortBy { ${criteria.map { it.token }.mkStmt()} }")
         is XR.Take ->
           stmt("${head.token}.take(${num.token})")
         is XR.Drop ->
@@ -265,7 +275,7 @@ class MirrorIdiom(val renderOpts: RenderOptions = RenderOptions()) {
         is XR.FlatGroupBy ->
           stmt("groupBy(${by.token})")
         is XR.FlatSortBy ->
-          stmt("sortBy(${by.token})(${ordering.token})")
+          stmt("sortBy(${criteria.map { it.token }.mkStmt()})")
         is XR.Distinct ->
           stmt("${head.token}.distinct")
         is XR.DistinctOn ->
@@ -416,7 +426,7 @@ class MirrorIdiom(val renderOpts: RenderOptions = RenderOptions()) {
         is SX.Join -> stmt("val ${variable.token} = ${joinType.simpleName.token}(${onQuery.token}) { ${condition.token} }")
         is SX.ArbitraryAssignment -> stmt("val ${variable.token} = /*ASI*/ ${expression.token}")
         is SX.GroupBy -> stmt("groupBy(${grouping.token})")
-        is SX.SortBy -> stmt("sortBy(${ordering.token})(${sorting.token})")
+        is SX.SortBy -> stmt("sortBy(${criteria.map { it.token }.mkStmt()})")
         is SX.Where -> stmt("where(${condition.token})")
       }
 

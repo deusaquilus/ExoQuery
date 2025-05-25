@@ -41,9 +41,14 @@ class StatelessTransformerSpec: FreeSpec({
             ConcatMap(Entity("a'"), Ident("b"), Ident("c'"))
       }
       "sortBy" {
-        val ast: XR = SortBy(Entity("a"), Ident("b"), Ident("c"), Ordering.AscNullsFirst)
+        val ast: XR = SortBy(Entity("a"), Ident("b"), listOf(XR.OrderField.By(Ident("c"), Ordering.AscNullsFirst)))
         Subject(Entity("a") to Entity("a'"), Ident("b") to Ident("b'"), Ident("c") to Ident("c'"))(ast) shouldBe
-            SortBy(Entity("a'"), Ident("b"), Ident("c'"), Ordering.AscNullsFirst)
+            SortBy(Entity("a'"), Ident("b"), listOf(XR.OrderField.By(Ident("c'"), Ordering.AscNullsFirst)))
+      }
+      "sortBy - Implicit" {
+        val ast: XR = SortBy(Entity("a"), Ident("b"), listOf(XR.OrderField.Implicit(Ident("c"))))
+        Subject(Entity("a") to Entity("a'"), Ident("b") to Ident("b'"), Ident("c") to Ident("c'"))(ast) shouldBe
+            SortBy(Entity("a'"), Ident("b"), listOf(XR.OrderField.Implicit(Ident("c'"))))
       }
       //"aggregation" {
       //  val ast: XR = Aggregation(OP.`max`, Ident("a"))

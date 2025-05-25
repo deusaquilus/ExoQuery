@@ -138,8 +138,17 @@ data class AvoidAliasConflict(override val state: Set<String>, val detemp: Boole
         this is DistinctOn ->
           recurseAndApply(head, id, by) { q, i, b -> DistinctOn.cs(q, i, b) }
 
-        this is SortBy && head.isUnaliased() ->
-          invoke(id, criteria) { i, c -> SortBy.cs(head, i, c, ordering) }
+        this is SortBy && head.isUnaliased() -> {
+          // We don't care about aliases from the sub-criteria clobbering each other. Even if there were physical queries
+          // inside (which is not even possible) then they would still be in independent scopes. If we start to care we should switch to applyList.
+          // It would be something lik this:
+          // val newCriteriaA = applyList(criteria) { t, ord ->
+          //   val (_, newField, newState) = (t as AvoidAliasConflict).refreshBody(id, ord.field) { "unaliased-OrderField.field" }
+          //   ord.transform { _ -> newField } to newState
+          // }
+          val newCriteria = criteria.map { ord -> ord.transform { refreshBody(id, it) { "unaliased-OrderField.field" }.second } }
+          SortBy.cs(head, id, newCriteria) to Recurse(state)
+        }
 
         this is XR.FlatJoin -> {
           val (newHead, newState) = invoke(head)
@@ -216,12 +225,7 @@ data class AvoidAliasConflict(override val state: Set<String>, val detemp: Boole
   @Suppress("UNCHECKED_CAST")
   private inline operator fun <reified Q> invoke(x: Ident, body: XR.Query, crossinline f: (Ident, XR.Query) -> Q): Pair<Q, StatefulTransformer<Set<String>>> =
     trace("Uncapture Apply ($x, $body)").andReturnIf {
-      val (fresh, newBodyRaw) = x.refreshInsideOf(body) { "unaliased-${Q::class.simpleName}" }
-      val (newBody, t) =
-        trace("Uncapture Apply Recurse").andReturnIf {
-          AvoidAliasConflict(state + fresh.name, detemp, traceConfig)(newBodyRaw)
-        }({ it.first != newBodyRaw })
-
+      val (fresh, newBody, t) = refreshBody(x, body) { "unaliased-${Q::class.simpleName}" }
       (f(fresh, newBody) to t)
     }({ it.first != f(x, body) })
 
@@ -229,14 +233,17 @@ data class AvoidAliasConflict(override val state: Set<String>, val detemp: Boole
   // need to look into this issue.
   private inline operator fun <reified Q> invoke(x: Ident, body: XR.Expression, crossinline f: (Ident, XR.Expression) -> Q): Pair<Q, StatefulTransformer<Set<String>>> =
     trace("Uncapture Apply ($x, $body)").andReturnIf {
-      val (fresh, newBodyRaw) = x.refreshInsideOf(body) { "unaliased-${Q::class.simpleName}" }
-      val (newBody, t) =
-        trace("Uncapture Apply Recurse").andReturnIf {
-          AvoidAliasConflict(state + fresh.name, detemp, traceConfig)(newBodyRaw)
-        }({ it.first != newBodyRaw })
-
+      val (fresh, newBody, t) = refreshBody(x, body) { "unaliased-${Q::class.simpleName}" }
       (f(fresh, newBody) to t)
     }({ it.first != f(x, body) })
+
+  private fun <Body: XR> refreshBody(x: Ident, body: Body, logLabel: () -> String): Triple<XR.Ident, Body, StatefulTransformer<Set<String>>> {
+    val (fresh, newBodyRaw) = x.refreshInsideOf(body, logLabel)
+    return trace("Uncapture Apply Recurse").andReturnIf {
+      val (newBody, t) = AvoidAliasConflict(state + fresh.name, detemp, traceConfig)(newBodyRaw)
+      Triple(fresh, newBody as Body, t)
+    }({ it.second != newBodyRaw })
+  }
 
 
   /**

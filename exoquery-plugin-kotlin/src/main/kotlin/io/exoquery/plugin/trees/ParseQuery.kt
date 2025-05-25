@@ -211,8 +211,8 @@ object ParseQuery {
       },
       case(Ir.Call.FunctionMem1[Ir.Expr.ClassOf<SqlQuery<*>>(), Is.of("sortedBy", "sortedByDescending"), Ir.FunctionExpression.withBlock[Is(), Is()]]).thenThis { head, (params, body) ->
         when (symName) {
-          "sortedBy" -> XR.SortBy(parse(head), params.first().makeIdent(), ParseExpression.parseFunctionBlockBody(body), XR.Ordering.Asc, expr.loc)
-          "sortedByDescending" -> XR.SortBy(parse(head), params.first().makeIdent(), ParseExpression.parseFunctionBlockBody(body), XR.Ordering.Desc, expr.loc)
+          "sortedBy" -> XR.SortBy(parse(head), params.first().makeIdent(), listOf(XR.OrderField.By(ParseExpression.parseFunctionBlockBody(body), XR.Ordering.Asc)), expr.loc)
+          "sortedByDescending" -> XR.SortBy(parse(head), params.first().makeIdent(), listOf(XR.OrderField.By(ParseExpression.parseFunctionBlockBody(body), XR.Ordering.Desc)), expr.loc)
           else -> parseError("Invalid sortedBy method: ${symName}", expr)
         }
       },

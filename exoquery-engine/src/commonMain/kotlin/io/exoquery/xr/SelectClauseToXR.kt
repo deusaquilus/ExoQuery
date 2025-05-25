@@ -115,7 +115,7 @@ object SelectClauseToXR {
           is SX.SortBy ->
             FlatMap(
               prev, prevVar,
-              nestRecurse(FlatSortBy(curr.sorting, curr.ordering, curr.loc), XR.Ident.Unused, remaining.tail)
+              nestRecurse(FlatSortBy(curr.criteria, curr.loc), XR.Ident.Unused, remaining.tail)
             )
         }
     return nestRecurse(prev, prevVar, remaining)

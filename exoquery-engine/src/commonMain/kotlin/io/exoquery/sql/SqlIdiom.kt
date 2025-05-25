@@ -154,7 +154,19 @@ interface SqlIdiom : HasPhasePrinting {
         }
       is XR.TagForSqlExpression ->
         xrError("Internal error. All instance of TagFOrSqlExpressio should have been spliced earlier.")
+      is XR.Window -> token
     }
+  }
+
+  val XR.Window.token get()  = xrWindowTokenImpl(this)
+  fun xrWindowTokenImpl(windowImpl: XR.Window) = with(windowImpl) {
+    val partitionBy = partitionBy.map { it.token }
+    val orderBy = orderBy.map { it.token }
+    val frame = over?.let { " ${it.token}" } ?: ""
+    val partition = if (partitionBy.isNotEmpty()) "PARTITION BY ${partitionBy.mkStmt()}" else ""
+    val order = if (orderBy.isNotEmpty()) "ORDER BY ${orderBy.mkStmt()}" else ""
+    val space = if (partition.isNotEmpty() && order.isNotEmpty()) " " else ""
+    +"${frame.token} OVER (${partition}${space}${order})"
   }
 
   // All previous sanitization focused on doing things like removing "<" and ">" from variables like "<init>"
@@ -444,7 +456,7 @@ interface SqlIdiom : HasPhasePrinting {
     }
 
   fun tokenizeGroupBy(values: XR.Expression): Token = values.token
-  fun tokenOrderBy(criteria: List<OrderByCriteria>) = +"ORDER BY ${criteria.token { it.token }}"
+  fun tokenOrderBy(criteria: List<XR.OrderField>) = +"ORDER BY ${criteria.token { it.token }}"
 
   fun escapeIfNeeded(name: String): Token =
     if (reservedKeywords.contains(name.lowercase()))
@@ -587,15 +599,18 @@ interface SqlIdiom : HasPhasePrinting {
     tokenizeTable(name)
   }
 
-  val OrderByCriteria.token get(): Token = xrOrderByCriteriaTokenImpl(this)
-  fun xrOrderByCriteriaTokenImpl(orderByCriteriaImpl: OrderByCriteria): Token = with(orderByCriteriaImpl) {
-    when (this.ordering) {
-      is Asc -> +"${scopedTokenizer(this.ast)} ASC"
-      is Desc -> +"${scopedTokenizer(this.ast)} DESC"
-      is AscNullsFirst -> +"${scopedTokenizer(this.ast)} ASC NULLS FIRST"
-      is DescNullsFirst -> +"${scopedTokenizer(this.ast)} DESC NULLS FIRST"
-      is AscNullsLast -> +"${scopedTokenizer(this.ast)} ASC NULLS LAST"
-      is DescNullsLast -> +"${scopedTokenizer(this.ast)} DESC NULLS LAST"
+  val XR.OrderField.token get(): Token = xrOrderByCriteriaTokenImpl(this)
+  fun xrOrderByCriteriaTokenImpl(orderByCriteriaImpl: XR.OrderField): Token = with(orderByCriteriaImpl) {
+    when {
+      // If the ordering is null it is effecitvely implicit and that should manifest on the SQL
+      orderingOpt == null -> +"${scopedTokenizer(field)}"
+      orderingOpt is Asc -> +"${scopedTokenizer(field)} ASC"
+      orderingOpt is Desc -> +"${scopedTokenizer(field)} DESC"
+      orderingOpt is AscNullsFirst -> +"${scopedTokenizer(field)} ASC NULLS FIRST"
+      orderingOpt is DescNullsFirst -> +"${scopedTokenizer(field)} DESC NULLS FIRST"
+      orderingOpt is AscNullsLast -> +"${scopedTokenizer(field)} ASC NULLS LAST"
+      orderingOpt is DescNullsLast -> +"${scopedTokenizer(field)} DESC NULLS LAST"
+      else -> xrError("Unknown ordering: ${this}")
     }
   }
 

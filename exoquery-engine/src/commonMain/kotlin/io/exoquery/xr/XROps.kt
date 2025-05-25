@@ -318,7 +318,7 @@ class DistinctHeadMap() {
 val XR.SortBy.Companion.DistinctHead get() = DistinctHeadMatchSortBy()
 
 class DistinctHeadMatchSortBy() {
-  operator fun <AP : Pattern<Q>, Q : XR.Query, BP : Pattern<XR.Expression>> get(x: AP, y: BP) =
+  operator fun <AP : Pattern<Q>, Q : XR.Query, BP : Pattern<List<XR.OrderField>>> get(x: AP, y: BP) =
     customPattern2M("XR.SortBy.DistinctHead", x, y) { it: XR.SortBy ->
       with(it) {
         when {

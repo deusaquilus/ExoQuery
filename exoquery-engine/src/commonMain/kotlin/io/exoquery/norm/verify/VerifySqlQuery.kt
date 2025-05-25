@@ -69,7 +69,7 @@ class VerifySqlQuery {
 
     val freeVariableErrors =
       q.where.verifyOrSkip() +
-          q.orderBy.map { it.ast }.verifyOrSkip() +
+          q.orderBy.map { ord -> ord.field }.verifyOrSkip() +
           q.limit.verifyOrSkip() +
           q.select
             .flatMap { expandSelect(it) }

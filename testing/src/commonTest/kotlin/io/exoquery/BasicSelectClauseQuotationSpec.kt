@@ -7,7 +7,6 @@ import io.exoquery.Ord.Desc
 import io.exoquery.sql.PostgresDialect
 import io.exoquery.xr.*
 import io.exoquery.xr.XR.Expression
-import io.exoquery.xr.XR.Ordering.TupleOrdering
 import io.exoquery.xr.XR.Product.Companion.TupleSmartN
 import io.kotest.matchers.equals.shouldBeEqual
 
@@ -124,8 +123,10 @@ class BasicSelectClauseQuotationSpec: GoldenSpec(BasicSelectClauseQuotationSpecG
       people.xr shouldBeEqual SelectClause.of(
         listOf(SX.From(pIdent, personEnt)),
         sortBy = SX.SortBy(
-          TupleSmartN(pIdent.prop("age"), pIdent.prop("name")),
-          TupleOrdering.of(XR.Ordering.Asc, XR.Ordering.Desc)
+          listOf(
+            XR.OrderField.By(pIdent.prop("age"), XR.Ordering.Asc),
+            XR.OrderField.By(pIdent.prop("name"), XR.Ordering.Desc)
+          )
         ),
         select = XR.Property(pIdent, "name"),
         type = XRType.Value
@@ -143,7 +144,7 @@ class BasicSelectClauseQuotationSpec: GoldenSpec(BasicSelectClauseQuotationSpecG
 
       people.xr shouldBeEqual SelectClause.of(
         listOf(SX.From(pIdent, personEnt)),
-        sortBy = SX.SortBy(pIdent.prop("age"), XR.Ordering.Asc),
+        sortBy = SX.SortBy(listOf(XR.OrderField.By(pIdent.prop("age"), XR.Ordering.Asc))),
         select = XR.Property(pIdent, "name"),
         type = XRType.Value
       ).toXrRef()

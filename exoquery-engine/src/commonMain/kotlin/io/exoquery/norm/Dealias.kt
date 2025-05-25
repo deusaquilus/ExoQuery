@@ -7,6 +7,7 @@ import io.exoquery.xr.XR.*
 import io.exoquery.xr.XR.Map // Make sure to explicitly have this import or Scala will use Map the collection
 import io.exoquery.xr.XR
 import io.exoquery.xr.*
+import io.exoquery.xr.BetaReduction
 import io.exoquery.xr.copy.*
 import io.exoquery.xrError
 
@@ -40,8 +41,16 @@ data class Dealias(override val state: XR.Ident?, val traceConfig: TraceConfig) 
         }
 
         is SortBy -> {
-          val (a, b, c, t) = dealias(head, id, criteria)
-          SortBy.cs(a, b, c, ordering) to t
+          val (an, t) = invoke(head)
+          val alias = t.state
+          if (alias != null) {
+            val retypedAlias = alias.copy(type = id.type)
+            // We don't care about aliases from the sub-criteria clobbering each other. Even if there were physical queries
+            // inside (which is not even possible) then they would still be in independent scopes.
+            val cn = criteria.map { ord -> ord.transform { BetaReduction(it, id to retypedAlias).asExpr() } }
+            SortBy.cs(an, id, cn) to Dealias(id, traceConfig)
+          } else
+            SortBy.cs(an, id, criteria) to Dealias(id, traceConfig)
         }
 
         is DistinctOn -> {
@@ -91,6 +100,8 @@ data class Dealias(override val state: XR.Ident?, val traceConfig: TraceConfig) 
 
   data class DealiasResultA(val a: Query, val b: Ident, val c: Expression, val newState: StatefulTransformer<Ident?>)
   data class DealiasResultB(val a: Query, val b: Ident, val c: Query, val newState: StatefulTransformer<Ident?>)
+
+  data class DealiasResultGen<T>(val a: Query, val b: Ident, val c: T, val newState: StatefulTransformer<Ident?>)
 
   private fun dealias(a: Query, b: Ident, c: Expression): DealiasResultA {
     val (an, t) = invoke(a)

@@ -67,7 +67,7 @@ data class FreeVariables(override val state: State) : StatefulTransformer<State>
       is XR.DistinctOn -> xr to free(xr.head, xr.id, xr.by)
       is XR.FlatMap -> xr to free(xr.head, xr.id, xr.body)
       is XR.ConcatMap -> xr to free(xr.head, xr.id, xr.body)
-      is XR.SortBy -> xr to free(xr.head, xr.id, xr.criteria)
+      is XR.SortBy -> xr to free(xr.head, xr.id, xr.criteria.map { it.field })
       is XR.FlatJoin -> xr to free(xr.head, xr.id, xr.on)
       else -> super.invoke(xr)
     }
@@ -126,6 +126,11 @@ data class FreeVariables(override val state: State) : StatefulTransformer<State>
       else -> super.invoke(xr)
     }
 
+  private fun free(a: XR.U.QueryOrExpression, ident: XR.Ident, c: List<XR.U.QueryOrExpression>): StatefulTransformer<State> {
+    val (_, ta) = FreeVariables(state)(a)
+    val (_, tc) = FreeVariables(state.withSeen(ident)).applyList(c) { t, v -> t.invoke(v) }
+    return FreeVariables(state.withFree(ta.state.free).withFree(tc.state.free))
+  }
 
   private fun free(a: XR.U.QueryOrExpression, ident: XR.Ident, c: XR.U.QueryOrExpression): StatefulTransformer<State> {
     val (_, ta) = FreeVariables(state)(a)

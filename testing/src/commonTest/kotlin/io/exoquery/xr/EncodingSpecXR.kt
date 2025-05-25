@@ -131,7 +131,11 @@ class EncodingSpecXR: FreeSpec({
       xr.encode().decodeXR() shouldBeXR xr
     }
     "FlatSortBy" {
-      val xr = XR.FlatSortBy(XR.Property(peopleVar, "name"), XR.Ordering.Asc)
+      val xr = XR.FlatSortBy(listOf(XR.OrderField.By(XR.Property(peopleVar, "name"), XR.Ordering.Asc)))
+      xr.encode().decodeXR() shouldBeXR xr
+    }
+    "FlatSortBy - Implicit" {
+      val xr = XR.FlatSortBy(listOf(XR.OrderField.Implicit(XR.Property(peopleVar, "name"))))
       xr.encode().decodeXR() shouldBeXR xr
     }
     "FlatFilter" {
@@ -159,7 +163,7 @@ class EncodingSpecXR: FreeSpec({
           ),
           SX.Where(peopleAreGreen),
           SX.GroupBy(peopleVar),
-          SX.SortBy(peopleVar, XR.Ordering.Asc),
+          SX.SortBy(listOf(XR.OrderField.Implicit(peopleVar), XR.OrderField.By(peopleVar, XR.Ordering.Asc))),
           peopleVar,
           peopleType
         )

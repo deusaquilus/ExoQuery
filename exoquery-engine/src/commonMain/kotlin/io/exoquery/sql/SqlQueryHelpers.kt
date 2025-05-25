@@ -15,7 +15,7 @@ fun List<SqlQueryApply.Layer>.findComponentsOrNull(): LayerComponents {
   if (groupings.size > 1) xrError("Multiple groupings detected, this is illegal:\n" + groupings.map { it.groupBy }.joinToString("\n"))
 
   val sortings = this.mapNotNull { if (it is SqlQueryApply.Layer.Sorting) it else null }
-  if (sortings.size > 1) xrError("Multiple sortings detected, this is illegal:\n" + sortings.map { it.sortedBy }.joinToString("\n"))
+  if (sortings.size > 1) xrError("Multiple sortings detected, this is illegal:\n" + sortings.map { it.criteria }.joinToString("\n"))
 
   val filterings = this.mapNotNull { if (it is SqlQueryApply.Layer.Filtering) it else null }
   if (filterings.size > 1) xrError("Multiple sortings detected, this is illegal:\n" + filterings.map { it.where }.joinToString("\n"))

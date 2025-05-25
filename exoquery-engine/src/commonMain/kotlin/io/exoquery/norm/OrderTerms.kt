@@ -18,7 +18,7 @@ class OrderTerms(val traceConfig: TraceConfig) {
       // case Filter(SortBy(a, b, c), d, e) =>
       //     Some(SortBy(Filter(a, d, e), b, c))
       case(Filter[SortBy[Is(), Is()], Is()]).then { (a, b, c), d, e ->
-        SortBy.csf(Filter.csf(a, d, e)(comp), b, c, compLeft.ordering)(compLeft)
+        SortBy.csf(Filter.csf(a, d, e)(comp), b, c)(compLeft)
       },
 
       // a.flatMap(b => c).take(n).map(d => e) =>

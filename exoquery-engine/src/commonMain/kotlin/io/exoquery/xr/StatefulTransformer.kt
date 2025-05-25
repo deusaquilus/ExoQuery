@@ -117,6 +117,7 @@ interface StatefulTransformer<T> {
           val (headA, stateA) = invoke(head)
           QueryToExpr.cs(headA) to stateA
         }
+        is Window -> invoke(this)
         is Block -> invoke(this)
         is Const -> this to this@StatefulTransformer
         is Ident -> invokeIdent(this)
@@ -183,8 +184,8 @@ interface StatefulTransformer<T> {
         }
         is SortBy -> {
           val (queryA, stateA) = invoke(head)
-          val (criteriaA, stateB) = stateA.invoke(criteria)
-          SortBy.cs(queryA, id, criteriaA, ordering) to stateB
+          val (criteriaA, stateB) = stateA.applyList(criteria) { t, v -> t.invoke(v) }
+          SortBy.cs(queryA, id, criteriaA) to stateB
         }
         is Take -> {
           val (queryA, stateA) = invoke(head)
@@ -201,8 +202,8 @@ interface StatefulTransformer<T> {
           FlatGroupBy.cs(aA) to stateA
         }
         is FlatSortBy -> {
-          val (aA, stateA) = invoke(by)
-          FlatSortBy.cs(aA, ordering) to stateA
+          val (aA, stateA) = applyList(criteria) { t, v -> t.invoke(v) }
+          FlatSortBy.cs(aA) to stateA
         }
         is FlatFilter -> {
           val (aA, stateA) = invoke(by)
@@ -241,6 +242,28 @@ interface StatefulTransformer<T> {
   fun invokeIdent(xr: Ident): Pair<Ident, StatefulTransformer<T>> =
     with(xr) {
       this to this@StatefulTransformer
+    }
+
+  operator fun invoke(xr: XR.OrderField): Pair<XR.OrderField, StatefulTransformer<T>> =
+    with(xr) {
+      when (this) {
+        is XR.OrderField.By -> {
+          val (fieldA, stateA) = invoke(field)
+          XR.OrderField.By(fieldA, ordering) to stateA
+        }
+        is XR.OrderField.Implicit -> {
+          val (fieldA, stateA) = invoke(field)
+          XR.OrderField.Implicit(fieldA) to stateA
+        }
+      }
+    }
+
+  operator fun invoke(xr: XR.Window): Pair<XR.Window, StatefulTransformer<T>> =
+    with(xr) {
+      val (partitionByA, stateA) = applyList(partitionBy) { t, v -> t.invoke(v) }
+      val (orderByA, stateB) = stateA.applyList(orderBy) { t, v -> t.invoke(v) }
+      val (overA, stateC) = stateB.invoke(over)
+      Window.cs(partitionByA, orderByA, overA) to stateC
     }
 
   operator fun invoke(xr: XR.U.QueryOrExpression): Pair<XR.U.QueryOrExpression, StatefulTransformer<T>> =

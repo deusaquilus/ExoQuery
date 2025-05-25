@@ -44,6 +44,7 @@ interface StatelessTransformer {
   operator fun invoke(xr: GlobalCall): GlobalCall = with(xr) { GlobalCall.csf(name, args.map { invoke(it) })(this) }
   operator fun invoke(xr: MethodCall): MethodCall = with(xr) { MethodCall.csf(invoke(head), name, args.map { invoke(it) })(this) }
   operator fun invoke(xr: XR.Free): Free = with(xr) { Free.csf(parts, params.map { invoke(it) })(this) }
+  operator fun invoke(xr: XR.Window): XR.Window = with(xr) { Window.csf(partitionBy, orderBy, over)(this) }
 
   operator fun invoke(xr: XR.Expression): XR.Expression =
     with(xr) {
@@ -61,6 +62,7 @@ interface StatelessTransformer {
         is Product -> Product.csf(fields.map { it.first to invoke(it.second) })(this)
         // Free can both be Expression and Query
         is Free -> invoke(this)
+        is Window -> invoke(this)
         is MethodCall -> invoke(this)
         is GlobalCall -> invoke(this)
         is QueryToExpr -> QueryToExpr.csf(invoke(head))(this)
@@ -75,6 +77,12 @@ interface StatelessTransformer {
 
   operator fun invoke(xr: XR.Entity): XR.Entity = xr
 
+  operator fun invoke(ord: XR.OrderField) =
+    when (ord) {
+      is XR.OrderField.By -> XR.OrderField.By(invoke(ord.field), ord.ordering)
+      is XR.OrderField.Implicit -> XR.OrderField.Implicit(invoke(ord.field))
+    }
+
   operator fun invoke(xr: XR.Query): XR.Query =
     with(xr) {
       when (this) {
@@ -87,11 +95,11 @@ interface StatelessTransformer {
         is Distinct -> Distinct.csf(invoke(head))(this)
         is DistinctOn -> DistinctOn.csf(invoke(head), invokeIdent(id), invoke(by))(this)
         is Drop -> Drop.csf(invoke(head), invoke(num))(this)
-        is SortBy -> SortBy.csf(invoke(head), invokeIdent(id), invoke(criteria), ordering)(this)
+        is SortBy -> SortBy.csf(invoke(head), invokeIdent(id), criteria.map { invoke(it) })(this)
         is Take -> Take.csf(invoke(head), invoke(num))(this)
         is FlatJoin -> FlatJoin.csf(invoke(head), invokeIdent(id), invoke(on))(this)
         is FlatGroupBy -> FlatGroupBy.csf(invoke(by))(this)
-        is FlatSortBy -> FlatSortBy.csf(invoke(by), ordering)(this)
+        is FlatSortBy -> FlatSortBy.csf(criteria.map { invoke(it) })(this)
         is FlatFilter -> FlatFilter.csf(invoke(by))(this)
         is ConcatMap -> ConcatMap.csf(invoke(head), invokeIdent(id), invoke(body))(this)
         is Nested -> Nested.csf(invoke(head))(this)

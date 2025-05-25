@@ -21,7 +21,7 @@ class NormalizeNestedStructures(val normalize: StatelessTransformer) {
         is FlatMap -> FlatMap.cs(normalize(head), id, normalize(body)).nullIfSameAs(q)
         is ConcatMap -> ConcatMap.cs(normalize(head), id, normalize(body)).nullIfSameAs(q)
         is Filter -> Filter.cs(normalize(head), id, normalize(body)).nullIfSameAs(q)
-        is SortBy -> SortBy.cs(normalize(head), id, normalize(criteria), ordering).nullIfSameAs(q)
+        is SortBy -> SortBy.cs(normalize(head), id, criteria.map { ord -> ord.transform { normalize(it) } }).nullIfSameAs(q)
         is Take -> Take.cs(normalize(head), normalize(num)).nullIfSameAs(q)
         is Drop -> Drop.cs(normalize(head), normalize(num)).nullIfSameAs(q)
         is Union -> Union.cs(normalize(a), normalize(b)).nullIfSameAs(q)
@@ -41,7 +41,7 @@ class NormalizeNestedStructures(val normalize: StatelessTransformer) {
 
         is FlatFilter -> FlatFilter.cs(normalize(by)).nullIfSameAs(q)
         is FlatGroupBy -> FlatGroupBy.cs(normalize(by)).nullIfSameAs(q)
-        is FlatSortBy -> FlatSortBy.cs(normalize(by), ordering).nullIfSameAs(q)
+        is FlatSortBy -> FlatSortBy.cs(criteria.map { it.transform { normalize(it) } }).nullIfSameAs(q)
         // Not sure why Quill didn't normalize Infixes (maybe it didn't matter because normalization is mainly for XR.Query)
         is Free -> Free.cs(parts, params.map { normalize(it) }).nullIfSameAs(q)
         is ExprToQuery -> null

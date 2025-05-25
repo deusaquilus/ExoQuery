@@ -121,7 +121,10 @@ object MirrorIdiomReqGoldenDynamic: GoldenQueryFile {
       "Table(Person).take(2)"
     ),
     "XR.Query/XR.SortBy" to kt(
-      "Table(Person).sortBy(Asc) { p -> p.name }"
+      "Table(Person).sortBy { p.name to Asc }"
+    ),
+    "XR.Query/XR.SortBy - Implicit" to kt(
+      "Table(Person).sortBy { p.name }"
     ),
     "XR.Query/XR.FlatJoin" to kt(
       "Table(Person).join { p -> p.name == o.other }"
@@ -130,7 +133,7 @@ object MirrorIdiomReqGoldenDynamic: GoldenQueryFile {
       "groupBy(p.name)"
     ),
     "XR.Query/XR.FlatSortBy" to kt(
-      "sortBy(p.name)(Asc)"
+      "sortBy(p.name to Asc)"
     ),
     "XR.Query/XR.FlatFilter" to kt(
       "where(p.name == o.other)"
@@ -151,7 +154,7 @@ object MirrorIdiomReqGoldenDynamic: GoldenQueryFile {
       """TagQ("foo")"""
     ),
     "XR.Query/XR.CustomQueryRef - SelectValue" to kt(
-      "select { val p = from(Table(Person)); val p = join(Table(Address)) { p.name == a.street }; where(p.age == 42); groupBy(p.name); sortBy(Asc)(p.name); p.name }"
+      "select { val p = from(Table(Person)); val p = join(Table(Address)) { p.name == a.street }; where(p.age == 42); groupBy(p.name); sortBy(p.name to Asc); p.name }"
     ),
   )
 }

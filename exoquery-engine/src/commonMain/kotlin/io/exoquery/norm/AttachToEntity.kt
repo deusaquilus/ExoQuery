@@ -69,7 +69,7 @@ object AttachToEntity {
         this is XR.FlatMap && head.isEntity() -> FlatMap.cs(f(head, id), id, body)
         this is XR.ConcatMap && head.isEntity() -> ConcatMap.cs(f(head, id), id, body)
         this is XR.Filter && head.isEntity() -> Filter.cs(f(head, id), id, body)
-        this is XR.SortBy && head.isEntity() -> SortBy.cs(f(head, id), id, criteria, ordering)
+        this is XR.SortBy && head.isEntity() -> SortBy.cs(f(head, id), id, criteria)
         this is XR.DistinctOn && head.isEntity() -> DistinctOn.cs(f(head, id), id, by)
 
         this is XR.Union || this is XR.UnionAll || this is XR.FlatJoin || this is XR.FlatFilter || this is XR.FlatSortBy || this is XR.FlatGroupBy -> f(this, alias ?: XR.Ident("x", type, loc))
@@ -82,7 +82,7 @@ object AttachToEntity {
         this is XR.FlatMap -> FlatMap.cs(applyWithId(f, id, nextId + 1)(head), id, body)
         this is XR.ConcatMap -> ConcatMap.cs(applyWithId(f, id, nextId + 1)(head), id, body)
         this is XR.Filter -> Filter.cs(applyWithId(f, id, nextId + 1)(head), id, body)
-        this is XR.SortBy -> SortBy.cs(applyWithId(f, id, nextId + 1)(head), id, criteria, ordering)
+        this is XR.SortBy -> SortBy.cs(applyWithId(f, id, nextId + 1)(head), id, criteria)
         this is XR.Take -> Take.cs(applyWithId(f, alias, nextId + 1)(head), num)
         this is XR.Drop -> Drop.cs(applyWithId(f, alias, nextId + 1)(head), num)
         // Note that Aggregation is not here because in ExoQuery XR.Aggregation is not a type of XR.Query

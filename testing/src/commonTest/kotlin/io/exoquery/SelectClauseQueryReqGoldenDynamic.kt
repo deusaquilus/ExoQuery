@@ -43,13 +43,13 @@ object SelectClauseQueryReqGoldenDynamic: GoldenQueryFile {
       "SELECT p.first, r.model AS second FROM Person p INNER JOIN Robot r ON p.first = r.ownerFirstName GROUP BY p.first, r.model"
     ),
     "table.emb?.field/sortBy/XR" to kt(
-      "select { val p = from(Table(Person)); sortBy(TupleOrdering)(TupleA2(first = p.age, second = { val tmp0_safe_receiver = p.name; if (tmp0_safe_receiver == null) null else tmp0_safe_receiver.first })); Tuple(first = p.name, second = p.age) }"
+      "select { val p = from(Table(Person)); sortBy(p.age to Asc, { val tmp0_safe_receiver = p.name; if (tmp0_safe_receiver == null) null else tmp0_safe_receiver.first } to Desc); Tuple(first = p.name, second = p.age) }"
     ),
     "table.emb?.field/sortBy/SQL" to cr(
       "SELECT p.first, p.last, p.age AS second FROM Person p ORDER BY p.age ASC, p.first DESC"
     ),
     "join + where + groupBy + sortBy/XR" to kt(
-      "select { val p = from(Table(Person)); val a = join(Table(Address)) { p.id == a.ownerId }; where(p.age > 18); groupBy(TupleA2(first = p.age, second = a.street)); sortBy(TupleOrdering)(TupleA2(first = p.age, second = a.street)); Tuple(first = p, second = a) }"
+      "select { val p = from(Table(Person)); val a = join(Table(Address)) { p.id == a.ownerId }; where(p.age > 18); groupBy(TupleA2(first = p.age, second = a.street)); sortBy(p.age to Asc, a.street to Desc); Tuple(first = p, second = a) }"
     ),
     "join + where + groupBy + sortBy/SQL" to cr(
       "SELECT p.id, p.name, p.age, a.ownerId, a.street, a.city FROM Person p INNER JOIN Address a ON p.id = a.ownerId WHERE p.age > 18 GROUP BY p.age, a.street ORDER BY p.age ASC, a.street DESC"

@@ -314,7 +314,7 @@ data class BetaReduction(val map: Map<QueryOrExpression, QueryOrExpression>, val
           is XR.Map -> Map.cs(invoke(head), id, BetaReduce(map - id)(body))
           is XR.FlatMap -> FlatMap.cs(invoke(head), id, BetaReduce(map - id)(body))
           is XR.ConcatMap -> ConcatMap.cs(invoke(head), id, BetaReduce(map - id)(body))
-          is XR.SortBy -> SortBy.cs(invoke(head), id, BetaReduce(map - id)(this.criteria), ordering)
+          is XR.SortBy -> SortBy.cs(invoke(head), id, this.criteria.map { ord -> ord.transform { BetaReduce(map - id)(it) } })
           is XR.FlatJoin -> FlatJoin.cs(invoke(head), id, BetaReduce(map - id)(on))
           is XR.DistinctOn -> DistinctOn.cs(invoke(head), id, BetaReduce(map - id)(by))
           // is XR.Take, is XR.Entity, is XR.Drop, is XR.Union, is XR.UnionAll, is XR.Aggregation, is XR.Distinct, is XR.Nested

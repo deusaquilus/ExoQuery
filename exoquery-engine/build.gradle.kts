@@ -17,7 +17,7 @@ plugins {
 version = extra["pluginProjectVersion"].toString()
 
 dependencies {
-  add("kspCommonMainMetadata", "io.exoquery:decomat-ksp:0.5.0")
+  add("kspCommonMainMetadata", "io.exoquery:decomat-ksp:0.6.0")
   commonMainApi("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
 }
 
@@ -41,7 +41,7 @@ kotlin {
         // No reflection in pprint-kmp
         api("io.exoquery:pprint-kotlin-kmp:3.0.0")
         // Actually this is going to be 0.0.5 - using an unpublished one now
-        api("io.exoquery:decomat-core:0.5.0")
+        api("io.exoquery:decomat-core:0.6.0")
         api("io.exoquery:terpal-runtime:2.1.20-2.0.0.PL")
         // This is a java-only library, I have no idea who it can even be here.
         // maybe if I actually attempt to use it in KMP mode in a non-java target it will actually fail

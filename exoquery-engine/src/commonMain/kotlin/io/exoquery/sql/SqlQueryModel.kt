@@ -18,15 +18,11 @@ import io.exoquery.xr.XR.FlatSortBy
 import io.exoquery.xr.XR.FlatFilter
 import io.exoquery.xr.XR.FlatJoin
 import io.exoquery.xr.XR.Ordering.PropertyOrdering
-import io.exoquery.xr.XR.Ordering.TupleOrdering
 import io.exoquery.xrError
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import io.decomat.productComponentsOf as productOf
 import io.decomat.HasProductClass as PC
-
-@Serializable
-final data class OrderByCriteria(val ast: XR.Expression, val ordering: PropertyOrdering)
 
 @Serializable
 sealed interface FromContext {
@@ -198,7 +194,7 @@ final data class FlattenSqlQuery(
   val from: List<FromContext> = emptyList(),
   val where: XR.Expression? = null,
   val groupBy: XR.Expression? = null,
-  val orderBy: List<OrderByCriteria> = emptyList(),
+  val orderBy: List<XR.OrderField> = emptyList(),
   val limit: XR.Expression? = null,
   val offset: XR.Expression? = null,
   val select: List<SelectValue> = emptyList(),
@@ -215,7 +211,7 @@ final data class FlattenSqlQuery(
       from = from.map { it.transformXR(f) },
       where = where?.let { f(it) },
       groupBy = groupBy?.let { f(it) },
-      orderBy = orderBy.map { it.copy(ast = f(it.ast)) },
+      orderBy = orderBy.map { ord -> ord.transform { f(it) } },
       limit = limit?.let { f(it) },
       offset = offset?.let { f(it) },
       select = select.map { it.copy(expr = f(it.expr)) }
@@ -286,14 +282,14 @@ class SqlQueryApply(val traceConfig: TraceConfig) {
   sealed interface Layer {
     data class Context(val ctx: FromContext) : Layer
     data class Grouping(val groupBy: XR.Expression) : Layer
-    data class Sorting(val sortedBy: XR.Expression, val ordering: XR.Ordering) : Layer
+    data class Sorting(val criteria: List<XR.OrderField>) : Layer
     data class Filtering(val where: XR.Expression) : Layer
     companion object {
       fun fromFlatUnit(xr: XR.U.FlatUnit): Layer =
         when (xr) {
           is FlatFilter -> Layer.Filtering(xr.by)
           is FlatGroupBy -> Layer.Grouping(xr.by)
-          is FlatSortBy -> Layer.Sorting(xr.by, xr.ordering)
+          is FlatSortBy -> Layer.Sorting(xr.criteria)
         }
     }
   }
@@ -363,7 +359,7 @@ class SqlQueryApply(val traceConfig: TraceConfig) {
         queryRaw
           .let { if (grouping != null) it.copy(groupBy = grouping.groupBy) else it }
           // TODO what if there is already an orderBy?
-          .let { if (sorting != null) it.copy(orderBy = orderByCriteria(sorting.sortedBy, sorting.ordering, contexts)) else it }
+          .let { if (sorting != null) it.copy(orderBy = FlattenCriteria.flattenOrderFields(sorting.criteria, contexts)) else it }
           // Not sure if its possible to already have a where-clause but if it is combine them
           .let { if (filtering != null) it.copy(where = combineWhereClauses(it.where, filtering.where)) else it }
 
@@ -526,11 +522,10 @@ class SqlQueryApply(val traceConfig: TraceConfig) {
           }
 
           is XR.SortBy -> {
-            fun allIdentsIn(criteria: List<OrderByCriteria>) =
-              criteria.flatMap { CollectXR.byType<XR.Ident>(it.ast).map { it.name } }
+            fun allIdentsIn(criteria: List<XR.OrderField>) =
+              criteria.flatMap { CollectXR.byType<XR.Ident>(it.field).map { it.name } }
 
             val b = base(head, id, nestNextMap = false)
-            val criteria = orderByCriteria(criteria, ordering, b.from)
             // If the sortBy body uses the filter id, make sure it matches one of the aliases in the fromContexts
             if (b.where == null && (!allIdentsIn(criteria).contains(id.name) || collectAliases(b.from).contains(id.name)))
               trace("Flattening| SortBy(Ident) [Simple]") andReturn {
@@ -704,29 +699,6 @@ class SqlQueryApply(val traceConfig: TraceConfig) {
     }
   }
 
-  private fun orderByCriteria(ast: XR.Expression, ord: XR.Ordering, from: List<FromContext>): List<OrderByCriteria> =
-    when {
-      // Typically when you have something like `people.sortBy(p -> tupleOf(p.name, p.age))(tupleOf(Asc, Desc))`
-      // the tuple of Asc/Descs needs to have the same size as the sortBy tuple
-      ast is XR.Product && ord is TupleOrdering -> {
-        if (ord.elems.size != ast.fields.size) xrError("TODO error msg")
-        ord.elems.zip(ast.fields).flatMap { (ordElem, field) -> orderByCriteria(field.second, ordElem, from) }
-      }
-      // This is when you've got a single Asc/Desc and a tuple of sortBys e.g. `people.sortBy(p -> tupleOf(p.name, p.age))(Asc)`
-      // in this case apply the Asc to each one recursively.
-      ast is XR.Product && ord is PropertyOrdering ->
-        ast.fields.flatMap { (_, value) -> orderByCriteria(value, ord, from) }
-
-      // if its a quat product, use ExpandSelection to break it down into its component fields and apply the ordering to all of them
-      // This is when you've got a single Asc/Desc and a ident in the sortBy e.g. `people.sortBy(p -> p)(Asc)`
-      // that means we want to sort by every single field as Asc so apply the sorting recurisvely.
-      ast is XR.Ident && ord is PropertyOrdering ->
-        ExpandSelection(from).ofSubselect(listOf(SelectValue(ast))).map { it.expr }.flatMap { orderByCriteria(it, ord, from) }
-
-      ord is PropertyOrdering -> listOf(OrderByCriteria(ast, ord))
-      else -> xrError("Invalid order by criteria $ast")
-    }
-
   private fun selectValues(ast: XR.Expression) = listOf(SelectValue(ast))
 
   private fun source(ast: XR.Entity, alias: String): FromContext = TableContext(ast, alias)
@@ -780,5 +752,33 @@ class SqlQueryApply(val traceConfig: TraceConfig) {
           is FlatJoinContext -> collectAliases(listOf(from))
         }
       }
+    }
+}
+
+
+
+object FlattenCriteria {
+
+  fun flattenOrderFields(fields: List<XR.OrderField>, from: List<FromContext>): List<XR.OrderField> =
+    fields.flatMap { flattenOrderField(it, from) }
+
+  fun flattenOrderField(ord: XR.OrderField, from: List<FromContext>) =
+    flattenBase(ord.field, ord.orderingOpt, from)
+
+  fun flattenBase(ast: XR.Expression, ord: XR.Ordering?, from: List<FromContext>): List<XR.OrderField> =
+    when {
+      // This is when you've got a single Asc/Desc and a tuple of sortBys e.g. `people.sortBy(p -> tupleOf(p.name, p.age))(Asc)`
+      // in this case apply the Asc to each one recursively.
+      ast is XR.Product && ord is PropertyOrdering ->
+        ast.fields.flatMap { (_, value) -> flattenBase(value, ord, from) }
+
+      // if its a quat product, use ExpandSelection to break it down into its component fields and apply the ordering to all of them
+      // This is when you've got a single Asc/Desc and a ident in the sortBy e.g. `people.sortBy(p -> p)(Asc)`
+      // that means we want to sort by every single field as Asc so apply the sorting recurisvely.
+      ast is XR.Ident && ord is PropertyOrdering ->
+        ExpandSelection(from).ofSubselect(listOf(SelectValue(ast))).map { it.expr }.flatMap { flattenBase(it, ord, from) }
+
+      ord is PropertyOrdering -> listOf(XR.OrderField.By(ast, ord))
+      else -> xrError("Invalid order by criteria $ast")
     }
 }

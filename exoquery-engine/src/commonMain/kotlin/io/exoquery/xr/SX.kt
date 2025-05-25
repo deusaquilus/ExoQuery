@@ -1,5 +1,6 @@
 package io.exoquery.xr
 
+import io.exoquery.xr.XR.OrderField
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -89,11 +90,11 @@ sealed interface SX {
   }
 
   @Serializable
-  data class SortBy(val sorting: XR.Expression, val ordering: XR.Ordering, val loc: XR.Location = XR.Location.Synth) : SX {
-    data class Id(val sorting: XR.Expression, val ordering: XR.Ordering)
+  data class SortBy(val criteria: List<OrderField>, val loc: XR.Location = XR.Location.Synth) : SX {
+    data class Id(val criteria: List<OrderField>)
 
     @Transient
-    private val id = Id(sorting, ordering)
+    private val id = Id(criteria)
     override fun equals(other: Any?): Boolean = if (this === other) true else other is SortBy && id == other.id
     override fun hashCode(): Int = id.hashCode()
   }

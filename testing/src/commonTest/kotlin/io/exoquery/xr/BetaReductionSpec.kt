@@ -116,7 +116,11 @@ class BetaReductionSpec: FreeSpec({
       BetaReduction.ofXR(ast, Ident("b") to Ident("b'")) shouldBe ConcatMap(Entity("a"), Ident("x"), Ident("b'"))
     }
     "sortBy" {
-      val ast: XR = SortBy(Entity("a"), Ident("b"), Ident("b"), Ordering.AscNullsFirst)
+      val ast: XR = SortBy(Entity("a"), Ident("b"), listOf(XR.OrderField.By(Ident("b"), XR.Ordering.Asc)))
+      BetaReduction.ofXR(ast, Ident("b") to Ident("b'")) shouldBe ast
+    }
+    "sortBy - Implicit" {
+      val ast: XR = SortBy(Entity("a"), Ident("b"), listOf(XR.OrderField.Implicit(Ident("b"))))
       BetaReduction.ofXR(ast, Ident("b") to Ident("b'")) shouldBe ast
     }
     "outer join" {

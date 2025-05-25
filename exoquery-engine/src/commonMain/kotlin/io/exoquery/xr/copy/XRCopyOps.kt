@@ -50,6 +50,7 @@ import io.exoquery.xr.XR.OnConflict
 import io.exoquery.xr.XR.Returning
 import io.exoquery.xr.XR.Update
 import io.exoquery.xr.XR.Variable
+import io.exoquery.xr.XR.Window
 
 val Entity.Entity get() = this
 fun Entity.cs(name: String) = io.exoquery.xr.XR.Entity.csf(name)(this)
@@ -70,7 +71,7 @@ val ExprToQuery.ExprToQuery get() = this
 fun ExprToQuery.cs(head: XR.Expression) = io.exoquery.xr.XR.ExprToQuery.csf(head)(this)
 
 val SortBy.SortBy get() = this
-fun SortBy.cs(head: XR.Query, id: XR.Ident, criteria: XR.Expression, ordering: XR.Ordering) = io.exoquery.xr.XR.SortBy.csf(head, id, criteria, ordering)(this)
+fun SortBy.cs(head: XR.Query, id: XR.Ident, criteria: List<XR.OrderField>) = io.exoquery.xr.XR.SortBy.csf(head, id, criteria)(this)
 
 val Take.Take get() = this
 fun Take.cs(head: XR.Query, num: XR.Expression) = io.exoquery.xr.XR.Take.csf(head, num)(this)
@@ -94,7 +95,7 @@ val FlatGroupBy.FlatGroupBy get() = this
 fun FlatGroupBy.cs(by: XR.Expression) = io.exoquery.xr.XR.FlatGroupBy.csf(by)(this)
 
 val FlatSortBy.FlatSortBy get() = this
-fun FlatSortBy.cs(by: XR.Expression, ordering: XR.Ordering) = io.exoquery.xr.XR.FlatSortBy.csf(by, ordering)(this)
+fun FlatSortBy.cs(criteria: List<XR.OrderField>) = io.exoquery.xr.XR.FlatSortBy.csf(criteria)(this)
 
 val FlatFilter.FlatFilter get() = this
 fun FlatFilter.cs(by: XR.Expression) = io.exoquery.xr.XR.FlatFilter.csf(by)(this)
@@ -185,3 +186,6 @@ fun Batching.cs(alias: XR.Ident, action: XR.Action) = io.exoquery.xr.XR.Batching
 
 val CustomQueryRef.CustomQueryRef get() = this
 fun CustomQueryRef.cs(customQuery: XR.CustomQuery) = io.exoquery.xr.XR.CustomQueryRef.csf(customQuery)(this)
+
+val Window.Window get() = this
+fun Window.cs(partitionBy: List<XR.Expression>, orderBy: List<XR.OrderField>, over: XR.Expression) = io.exoquery.xr.XR.Window.csf(partitionBy, orderBy, over)(this)

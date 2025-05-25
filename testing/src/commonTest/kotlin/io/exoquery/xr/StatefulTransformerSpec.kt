@@ -123,14 +123,27 @@ class StatefulTransformerSpec: FreeSpec({
 //      }
 
       "sortBy" {
-        val ast: XR = SortBy(Entity("a"), Ident("b"), Ident("c"), Ordering.AscNullsFirst)
+        val ast: XR = SortBy(Entity("a"), Ident("b"), listOf(XR.OrderField.By(Ident("c"), Ordering.AscNullsFirst)))
         Subject(
           listOf(),
           Entity("a") to Entity("a'"),
           Ident("b") to Ident("b'"),
           Ident("c") to Ident("c'")
         )(ast).let { (at, att) ->
-          at shouldBe SortBy(Entity("a'"), Ident("b"), Ident("c'"), Ordering.AscNullsFirst)
+          at shouldBe SortBy(Entity("a'"), Ident("b"), listOf(XR.OrderField.By(Ident("c'"), Ordering.AscNullsFirst)))
+          att.state shouldBe listOf(Entity("a"), Ident("c"))
+        }
+      }
+
+      "sortBy - Implicit" {
+        val ast: XR = SortBy(Entity("a"), Ident("b"), listOf(XR.OrderField.Implicit(Ident("c"))))
+        Subject(
+          listOf(),
+          Entity("a") to Entity("a'"),
+          Ident("b") to Ident("b'"),
+          Ident("c") to Ident("c'")
+        )(ast).let { (at, att) ->
+          at shouldBe SortBy(Entity("a'"), Ident("b"), listOf(XR.OrderField.Implicit(Ident("c'"))))
           att.state shouldBe listOf(Entity("a"), Ident("c"))
         }
       }

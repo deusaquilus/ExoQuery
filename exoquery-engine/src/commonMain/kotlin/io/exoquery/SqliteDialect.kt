@@ -137,14 +137,16 @@ class SqliteDialect(override val traceConf: TraceConfig = TraceConfig.Companion.
     "without"
   )
 
-  override fun xrOrderByCriteriaTokenImpl(orderByCriteriaImpl: OrderByCriteria): Token = with(orderByCriteriaImpl) {
-    when (this.ordering) {
-      is XR.Ordering.Asc -> +"${scopedTokenizer(ast)} ASC"
-      is XR.Ordering.Desc -> +"${scopedTokenizer(ast)} DESC"
-      is XR.Ordering.AscNullsFirst -> +"${scopedTokenizer(ast)} ASC /* NULLS FIRST */"
-      is XR.Ordering.DescNullsFirst -> +"${scopedTokenizer(ast)} DESC /* NULLS FIRST */"
-      is XR.Ordering.AscNullsLast -> +"${scopedTokenizer(ast)} ASC /* NULLS LAST */"
-      is XR.Ordering.DescNullsLast -> +"${scopedTokenizer(ast)} DESC /* NULLS LAST */"
+  override fun xrOrderByCriteriaTokenImpl(orderByCriteriaImpl: XR.OrderField): Token = with(orderByCriteriaImpl) {
+    when {
+      orderingOpt == null -> +"${scopedTokenizer(field)}"
+      orderingOpt is XR.Ordering.Asc -> +"${scopedTokenizer(field)} ASC"
+      orderingOpt is XR.Ordering.Desc -> +"${scopedTokenizer(field)} DESC"
+      orderingOpt is XR.Ordering.AscNullsFirst -> +"${scopedTokenizer(field)} ASC /* NULLS FIRST */"
+      orderingOpt is XR.Ordering.DescNullsFirst -> +"${scopedTokenizer(field)} DESC /* NULLS FIRST */"
+      orderingOpt is XR.Ordering.AscNullsLast -> +"${scopedTokenizer(field)} ASC /* NULLS LAST */"
+      orderingOpt is XR.Ordering.DescNullsLast -> +"${scopedTokenizer(field)} DESC /* NULLS LAST */"
+      else -> xrError("Unsupported ordering: $orderingOpt")
     }
   }
 

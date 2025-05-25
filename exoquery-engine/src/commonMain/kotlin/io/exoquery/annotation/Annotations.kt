@@ -15,6 +15,10 @@ import kotlin.reflect.KClass
 @Retention(AnnotationRetention.BINARY)
 annotation class CapturedFunction
 
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.BINARY)
+annotation class WindowFun(val name: String)
+
 @Target(AnnotationTarget.TYPE, AnnotationTarget.FUNCTION, AnnotationTarget.FIELD, AnnotationTarget.PROPERTY, AnnotationTarget.LOCAL_VARIABLE)
 @Retention(AnnotationRetention.BINARY)
 annotation class CapturedDynamic

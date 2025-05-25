@@ -145,7 +145,10 @@ class MirrorIdiomReq: GoldenSpecDynamic(MirrorIdiomReqGoldenDynamic, Mode.ExoGol
       shouldBeGolden(XR.Take(personEnt, XR.Const.Int(2)))
     }
     "XR.SortBy" {
-      shouldBeGolden(XR.SortBy(personEnt, "p".toId, "p" dot "name", XR.Ordering.Asc))
+      shouldBeGolden(XR.SortBy(personEnt, "p".toId, listOf(XR.OrderField.By("p" dot "name", XR.Ordering.Asc))))
+    }
+    "XR.SortBy - Implicit" {
+      shouldBeGolden(XR.SortBy(personEnt, "p".toId, listOf(XR.OrderField.Implicit("p" dot "name"))))
     }
     "XR.FlatJoin" {
       shouldBeGolden(XR.FlatJoin(XR.JoinType.Inner, personEnt, "p".toId, ("p" dot "name") `+==+` ("o" dot "other")))
@@ -154,7 +157,7 @@ class MirrorIdiomReq: GoldenSpecDynamic(MirrorIdiomReqGoldenDynamic, Mode.ExoGol
       shouldBeGolden(XR.FlatGroupBy("p" dot "name"))
     }
     "XR.FlatSortBy" {
-      shouldBeGolden(XR.FlatSortBy("p" dot "name", XR.Ordering.Asc))
+      shouldBeGolden(XR.FlatSortBy(listOf(XR.OrderField.By("p" dot "name", XR.Ordering.Asc))))
     }
     "XR.FlatFilter" {
       shouldBeGolden(XR.FlatFilter("p" dot "name" `+==+` ("o" dot "other")))
@@ -192,7 +195,7 @@ class MirrorIdiomReq: GoldenSpecDynamic(MirrorIdiomReqGoldenDynamic, Mode.ExoGol
             ),
             SX.Where("p" dot "age" `+==+` XR.Const.Int(42)),
             SX.GroupBy("p" dot "name"),
-            SX.SortBy("p" dot "name", XR.Ordering.Asc),
+            SX.SortBy(listOf(XR.OrderField.By("p" dot "name", XR.Ordering.Asc))),
             "p" dot "name",
             XRType.Value
           )

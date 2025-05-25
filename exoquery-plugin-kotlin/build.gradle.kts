@@ -44,7 +44,7 @@ dependencies {
   //implementation("com.facebook:ktfmt:0.43") <-- requires kotlin-test:1.6.10 so need to add to the GradlePlugin libs if we want to use this
 
   // Actually this is going to be 0.0.5 - using an unpublished one now
-  api("io.exoquery:decomat-core:0.4.0")
+  api("io.exoquery:decomat-core:0.6.0")
   api("io.exoquery:pprint-kotlin:3.0.0")
   api("com.github.vertical-blank:sql-formatter:2.0.4")
   // For the plugin to use Reflect it should be fine because the plugin dependencies do not get packed into the runtime jar

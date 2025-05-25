@@ -43,7 +43,7 @@ data class SelectClause(
       },
       where?.let { where -> where.copy(t(where.condition)) },
       groupBy?.let { groupBy -> groupBy.copy(t(groupBy.grouping)) },
-      sortBy?.let { sortBy -> sortBy.copy(t(sortBy.sorting)) },
+      sortBy?.let { sortBy -> sortBy.copy(sortBy.criteria.map { ord -> ord.transform { t(it) } }) },
       t(select)
     )
 
