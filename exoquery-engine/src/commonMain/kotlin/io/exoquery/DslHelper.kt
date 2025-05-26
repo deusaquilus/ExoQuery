@@ -29,7 +29,7 @@ interface WindowDsl {
   @Dsl @WindowFun("ROW_NUMBER") fun rowNumber(): Int
 
   @Dsl @WindowFun("SUM") fun <T> sum(expression: T): T
-  @Dsl @WindowFun("AVG") fun <T> avg(expression: T): T
+  @Dsl @WindowFun("AVG") fun avg(expression: Any?): Double
   @Dsl @WindowFun("MIN") fun <T> min(expression: T): T
   @Dsl @WindowFun("MAX") fun <T> max(expression: T): T
 
@@ -38,13 +38,13 @@ interface WindowDsl {
   fun count(expression: Any?): Int
 
   @Dsl
-  @WindowFun("COUNT(*)")
+  @WindowFun("COUNT_STAR")
   fun count(): Int
 
   @Dsl @WindowFun("LAG")
-  fun <T> lag(expression: T): T
+  fun <T> lag(expression: T): T?
   @Dsl @WindowFun("LEAD")
-  fun <T> lead(expression: T): T
+  fun <T> lead(expression: T): T?
 
   @Dsl @WindowFun("FIRST_VALUE")
   fun <T> firstValue(expression: T): T

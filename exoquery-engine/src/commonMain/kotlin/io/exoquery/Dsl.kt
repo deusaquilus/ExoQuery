@@ -435,7 +435,7 @@ interface CapturedBlock {
    * // SQL: SELECT COUNT(*) FROM people p
    * ```
    */
-  @DslFunctionCall(DslFunctionCallType.ImpureFunction::class, "COUNT(*)")
+  @DslFunctionCall(DslFunctionCallType.ImpureFunction::class, "COUNT_STAR")
   fun count(): Int = errorCap("The `min` expression of the Query was not inlined")
 
   // Use this as an aggregator for a query e.g. people.map(p -> p.age).min()
