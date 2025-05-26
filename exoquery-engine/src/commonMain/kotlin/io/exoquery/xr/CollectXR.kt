@@ -23,50 +23,17 @@ class CollectXR<T>(private val collect: (XR) -> T?) : StatefulTransformerSingleR
       }.root(xr).second.state
 
     operator fun <T> invoke(xr: XR, collect: (XR) -> T?): List<T> where T : XR =
-      CollectXR<T>(collect).root(xr).second.state
+      CollectXR<T>(collect).invoke(xr).second.state
   }
 }
 
 
-class ContainsXR(private val predicate: (XR) -> Boolean) : StatefulTransformer<Boolean> {
-
-  var isFound = false
-  override val state get() = isFound
-
-  override fun invoke(xr: XR.Expression): Pair<XR.Expression, StatefulTransformer<Boolean>> =
-    if (isFound) xr to this
-    else {
-      isFound = predicate(xr); xr to this
-    }
-
-  override fun invoke(xr: XR.Query): Pair<XR.Query, StatefulTransformer<Boolean>> =
-    if (isFound) xr to this
-    else {
-      isFound = predicate(xr); xr to this
-    }
-
-  override fun invoke(xr: XR.Branch): Pair<XR.Branch, StatefulTransformer<Boolean>> =
-    if (isFound) xr to this
-    else {
-      isFound = predicate(xr); xr to this
-    }
-
-  override fun invoke(xr: XR.Variable): Pair<XR.Variable, StatefulTransformer<Boolean>> =
-    if (isFound) xr to this
-    else {
-      isFound = predicate(xr); xr to this
-    }
-
-  override fun invoke(xr: XR): Pair<XR, StatefulTransformer<Boolean>> =
-    if (isFound) xr to this
-    else {
-      isFound = predicate(xr); xr to this
-    }
-
+class ContainsXR(private val predicate: (XR) -> Boolean) : StatelessChecker {
+  override fun check(xr: XR): Boolean = predicate(xr)
 
   companion object {
-    operator fun <T> invoke(xr: XR, collect: (XR) -> T?): List<T> where T : XR =
-      CollectXR<T>(collect).root(xr).second.state
+    operator fun invoke(xr: XR, collect: (XR) -> Boolean): Boolean =
+      ContainsXR(collect).invoke(xr)
   }
 }
 

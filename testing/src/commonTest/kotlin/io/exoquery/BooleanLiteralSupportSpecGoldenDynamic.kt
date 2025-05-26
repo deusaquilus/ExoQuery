@@ -64,7 +64,7 @@ object BooleanLiteralSupportSpecGoldenDynamic: GoldenQueryFile {
       """Table(Ent).map { e -> Tuple(first = foo, second = free(", ${'$'}{e.i},  > 123").asCondition()) }.distinct.map { r -> Tuple(first = baz, second = r.second) }"""
     ),
     "sql/expressify asCondition/distinct map-clause/SQL" to cr(
-      "SELECT 'baz' AS first, CASE WHEN r.second THEN 1 ELSE 0 END AS second FROM (SELECT DISTINCT 'foo' AS first, CASE WHEN e.i > 123 THEN 1 ELSE 0 END AS second FROM Ent e) AS r"
+      "SELECT 'baz' AS first, CASE WHEN r.second THEN 1 ELSE 0 END AS second FROM (SELECT DISTINCT x.first, x.second FROM (SELECT 'foo' AS first, CASE WHEN e.i > 123 THEN 1 ELSE 0 END AS second FROM Ent e) AS x) AS r"
     ),
     "sql/expressify asCondition/distinct tuple map-clause/XR" to kt(
       """Table(Ent).map { e -> Tuple(first = foo, second = free(", ${'$'}{e.i},  > 123").asPureCondition()) }.distinct"""

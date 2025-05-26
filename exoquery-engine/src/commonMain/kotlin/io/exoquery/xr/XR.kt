@@ -249,7 +249,7 @@ sealed interface XR {
 
       val Empty = FqName(listOf())
       val Cast = FqName(listOf("kotlinCast"))
-      val Distinct = FqName(listOf("DISTINCT"))
+      val CountDistinct = FqName("io.exoquery.CapturedBlock.countDistinct")
     }
 
     private val str by lazy { path.joinToString(".") }

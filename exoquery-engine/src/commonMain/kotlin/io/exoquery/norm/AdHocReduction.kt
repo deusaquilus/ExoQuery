@@ -40,20 +40,22 @@ class AdHocReduction(val traceConfig: TraceConfig) {
       case(Filter[FlatMap[Is(), Is()], Is()]).then { (a, b, c), d, e ->
         FlatMap.csf(a, b, Filter.csf(c, d, e)(comp))(compLeft)
       },
-      // a.flatMap(b => c.union(d))
-      //    a.flatMap(b => c).union(a.flatMap(b => d))
-      //
-      // case FlatMap(a, b, Union(c, d)) =>
-      case(FlatMap[Is(), Union[Is(), Is()]]).then { a, b, (c, d) ->
-        Union.csf(FlatMap.csf(a, b, c)(comp), FlatMap.csf(a, b, d)(comp))(compRight)
-      },
-      // a.flatMap(b => c.unionAll(d))
-      //    a.flatMap(b => c).unionAll(a.flatMap(b => d))
-      //
-      // case FlatMap(a, b, UnionAll(c, d)) =>
-      case(FlatMap[Is(), UnionAll[Is(), Is()]]).then { a, b, (c, d) ->
-        UnionAll.csf(FlatMap.csf(a, b, c)(comp), FlatMap.csf(a, b, d)(comp))(compRight)
-      }
+
+      // SymbolicReduction already does these
+      //// a.flatMap(b => c.union(d))
+      ////    a.flatMap(b => c).union(a.flatMap(b => d))
+      ////
+      //// case FlatMap(a, b, Union(c, d)) =>
+      //case(FlatMap[Is(), Union[Is(), Is()]]).then { a, b, (c, d) ->
+      //  Union.csf(FlatMap.csf(a, b, c)(comp), FlatMap.csf(a, b, d)(comp))(compRight)
+      //},
+      //// a.flatMap(b => c.unionAll(d))
+      ////    a.flatMap(b => c).unionAll(a.flatMap(b => d))
+      ////
+      //// case FlatMap(a, b, UnionAll(c, d)) =>
+      //case(FlatMap[Is(), UnionAll[Is(), Is()]]).then { a, b, (c, d) ->
+      //  UnionAll.csf(FlatMap.csf(a, b, c)(comp), FlatMap.csf(a, b, d)(comp))(compRight)
+      //}
     )
 }
 

@@ -317,8 +317,8 @@ interface SqlIdiom : HasPhasePrinting {
       // In this case for now we want to just assume SQL will do an implicit cast. May want to change this in the future.
       if (this.name == XR.FqName.Cast && args.size == 1)
         argsToken
-      else if (this.name == XR.FqName.Distinct)
-        +"${name.name} ${argsToken}"
+      else if (this.name == XR.FqName.CountDistinct)
+        +"count(DISTINCT ${argsToken})"
       else {
         val functionName = methodMappings[this.name] ?: this.name.name
         +"${functionName}(${argsToken})"

@@ -3,6 +3,7 @@ package io.exoquery.norm
 import io.exoquery.util.TraceConfig
 import io.exoquery.xr.BetaReduction
 import io.exoquery.xr.XR
+import io.exoquery.xr.contains
 import io.exoquery.xr.copy.*
 
 /**
@@ -138,7 +139,7 @@ class SymbolicReduction(val traceConfig: TraceConfig) {
         //
         // case FlatMap(Union(a, b), c, d) =>
         //     Some(Union(FlatMap(a, c, d), FlatMap(b, c, d)))
-        this is XR.FlatMap && head is XR.Union -> {
+        this is XR.FlatMap && head is XR.Union && !body.hasImpurities() -> {
           val (a, b) = Pair(head.a, head.b)
           val (c, d) = Pair(id, body)
           with(head) {
@@ -154,7 +155,7 @@ class SymbolicReduction(val traceConfig: TraceConfig) {
         //
         // a.unionAll(b).flatMap(c => d)
         //      a.flatMap(c => d).unionAll(b.flatMap(c => d))
-        this is XR.FlatMap && head is XR.UnionAll -> {
+        this is XR.FlatMap && head is XR.UnionAll && !body.hasImpurities() -> {
           val (a, b) = Pair(head.a, head.b)
           val (c, d) = Pair(id, body)
           with(head) {

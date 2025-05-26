@@ -14,6 +14,7 @@ interface StatelessTransformerSingleRoot : StatelessTransformer {
   override fun invoke(xr: XR): XR = super.invoke(root(xr))
 }
 
+
 interface StatelessTransformer {
 
   operator fun invoke(xr: U.QueryOrExpression) =

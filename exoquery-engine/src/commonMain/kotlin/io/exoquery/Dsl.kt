@@ -415,21 +415,9 @@ interface CapturedBlock {
   @DslFunctionCall(DslFunctionCallType.Aggregator::class)
   fun <T> count(value: T): Int = errorCap("The `min` expression of the Query was not inlined")
 
-  /**
-   * Typically you will use the `SqlQuery<T>.distinct()` function (i.e. [CapturedBlock.distinct]) to get distinct values from a query.
-   * In some cases e.g. when you are doing a counting-distinct this is impossible so you can
-   * use this flat-level function instead. For example:
-   * ```
-   * val peopleCount =
-   *   capture.select {
-   *     val p = from(Table<Person>())
-   *     count(distinct(p.name))
-   *   }
-   * // SQL: SELECT COUNT(DISTINCT p.name) FROM people p
-   * ```
-   */
-  @DslFunctionCall(DslFunctionCallType.ImpureFunction::class, "DISTINCT")
-  fun distinct(vararg value: Any?): Int = errorCap("The `min` expression of the Query was not inlined")
+  @DslFunctionCall(DslFunctionCallType.Aggregator::class)
+  fun <T> countDistinct(vararg value: T): Int = errorCap("The `min` expression of the Query was not inlined")
+
 
   /**
    * Use this in the select or map clauses to do a `COUNT(*)` query. For example:
