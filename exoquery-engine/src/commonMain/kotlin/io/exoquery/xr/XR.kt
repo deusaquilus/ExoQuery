@@ -164,6 +164,7 @@ sealed interface XR {
 
   @Serializable
   sealed interface Expression : XR, U.QueryOrExpression {
+    fun isBoolean() = type.isBooleanValue() || type.isBooleanExpression()
     fun isBooleanValue() = type.isBooleanValue()
     fun isBooleanExpression() = type.isBooleanExpression()
   }

@@ -1,61 +1,58 @@
 package io.exoquery
 
-class BooleanLiteralSupportSpec: GoldenSpecDynamic(BooleanLiteralSupportSpecGoldenDynamic, Mode.ExoGoldenOverride(), {
+class BooleanLiteralSupportSpec: GoldenSpecDynamic(BooleanLiteralSupportSpecGoldenDynamic, Mode.ExoGoldenTest(), {
   "value-fy boolean expression where needed" - {
     data class Ent(val name: String, val b: Boolean, val bb: Boolean, val bc: Boolean, val num: Int)
     data class Status(val name: String, val value: Boolean)
 
-// Scala:
-//  "value-fy boolean expression where needed" - testContext.withDialect(MirrorSqlDialectWithBooleanLiterals) { ctx =>
-//    import ctx._
-//
-//    case class Ent(name: String, b: Boolean, bb: Boolean, bc: Boolean, num: Int)
-//    case class Status(name: String, value: Boolean)
-//
-//    "condition" in {
-//      val q = quote {
-//        query[Ent].map(e => (e.name, if (e.b == e.bb) e.bc else e.b == e.bb))
-//      }
-//      ctx.run(q).string mustEqual
-//        "SELECT e.name AS _1, CASE WHEN e.b = e.bb THEN e.bc WHEN e.b = e.bb THEN 1 ELSE 0 END AS _2 FROM Ent e"
-//    }
-//
-//    "map-clause" in {
-//      val q = quote {
-//        query[Ent].map(e => e.bb == true)
-//      }
-//      ctx.run(q).string mustEqual
-//        "SELECT CASE WHEN e.bb = 1 THEN 1 ELSE 0 END FROM Ent e"
-//    }
-//    "map-clause with int" in {
-//      val q = quote {
-//        query[Ent].map(e => e.num > 10)
-//      }
-//      ctx.run(q).string mustEqual
-//        "SELECT CASE WHEN e.num > 10 THEN 1 ELSE 0 END FROM Ent e"
-//    }
-//    "tuple" in {
-//      val q = quote {
-//        query[Ent].map(e => ("foo", e.bb == true))
-//      }
-//      ctx.run(q).string mustEqual
-//        "SELECT 'foo' AS _1, CASE WHEN e.bb = 1 THEN 1 ELSE 0 END AS _2 FROM Ent e"
-//    }
-//    "tuple-multi" in {
-//      val q = quote {
-//        query[Ent].map(e => (e.bb == true, e.bc == false, e.num > 1))
-//      }
-//      ctx.run(q).string mustEqual
-//        "SELECT CASE WHEN e.bb = 1 THEN 1 ELSE 0 END AS _1, CASE WHEN e.bc = 0 THEN 1 ELSE 0 END AS _2, CASE WHEN e.num > 1 THEN 1 ELSE 0 END AS _3 FROM Ent e"
-//    }
-//    "case-class" in {
-//      val q = quote {
-//        query[Ent].map(e => Status("foo", e.bb == true))
-//      }
-//      ctx.run(q).string mustEqual
-//        "SELECT 'foo' AS name, CASE WHEN e.bb = 1 THEN 1 ELSE 0 END AS value FROM Ent e"
-//    }
-//  }
+    "filter - simple" {
+      val q = capture {
+        Table<Ent>().filter { e -> e.b }
+      }
+      shouldBeGolden(q.xr, "XR")
+      shouldBeGolden(q.buildRuntime(BooleanLiteralTestDialect(), "SQL"), "SQL")
+    }
+
+    "where - simple" {
+      val q = capture.select {
+        val e = from(Table<Ent>())
+        where { e.b }
+        e.name
+      }
+      shouldBeGolden(q.xr, "XR")
+      shouldBeGolden(q.buildRuntime(BooleanLiteralTestDialect(), "SQL"), "SQL")
+    }
+
+    "where - combined" {
+      val q = capture.select {
+        val e = from(Table<Ent>())
+        where { e.b || e.name == "Joe" }
+        e.name
+      }
+      shouldBeGolden(q.xr, "XR")
+      shouldBeGolden(q.buildRuntime(BooleanLiteralTestDialect(), "SQL"), "SQL")
+    }
+
+    "where - combined complex 1" {
+      val q = capture.select {
+        val e = from(Table<Ent>())
+        where { e.b || e.name == "Joe" || e.bb }
+        e.name
+      }
+      shouldBeGolden(q.xr, "XR")
+      shouldBeGolden(q.buildRuntime(BooleanLiteralTestDialect(), "SQL"), "SQL")
+    }
+
+    "where - combined complex 2" {
+      val q = capture.select {
+        val e = from(Table<Ent>())
+        where { e.b || if (e.bb) e.bc || e.b else e.num > 1 }
+        e.name
+      }
+      shouldBeGolden(q.xr, "XR")
+      shouldBeGolden(q.buildRuntime(BooleanLiteralTestDialect(), "SQL"), "SQL")
+    }
+
 
     "condition" {
       val q = capture {

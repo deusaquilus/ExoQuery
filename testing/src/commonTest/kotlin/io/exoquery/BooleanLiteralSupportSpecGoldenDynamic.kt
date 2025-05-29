@@ -6,6 +6,36 @@ import io.exoquery.printing.kt
 
 object BooleanLiteralSupportSpecGoldenDynamic: GoldenQueryFile {
   override val queries = mapOf<String, GoldenResult>(
+    "value-fy boolean expression where needed/filter - simple/XR" to kt(
+      "Table(Ent).filter { e -> e.b }"
+    ),
+    "value-fy boolean expression where needed/filter - simple/SQL" to cr(
+      "SELECT e.name, e.b, e.bb, e.bc, e.num FROM Ent e WHERE 1 = e.b"
+    ),
+    "value-fy boolean expression where needed/where - simple/XR" to kt(
+      "select { val e = from(Table(Ent)); where(e.b); e.name }"
+    ),
+    "value-fy boolean expression where needed/where - simple/SQL" to cr(
+      "SELECT e.name AS value FROM Ent e WHERE 1 = e.b"
+    ),
+    "value-fy boolean expression where needed/where - combined/XR" to kt(
+      "select { val e = from(Table(Ent)); where(e.b || e.name == Joe); e.name }"
+    ),
+    "value-fy boolean expression where needed/where - combined/SQL" to cr(
+      "SELECT e.name AS value FROM Ent e WHERE 1 = e.b OR e.name = 'Joe'"
+    ),
+    "value-fy boolean expression where needed/where - combined complex 1/XR" to kt(
+      "select { val e = from(Table(Ent)); where(e.b || e.name == Joe || e.bb); e.name }"
+    ),
+    "value-fy boolean expression where needed/where - combined complex 1/SQL" to cr(
+      "SELECT e.name AS value FROM Ent e WHERE 1 = e.b OR e.name = 'Joe' OR 1 = e.bb"
+    ),
+    "value-fy boolean expression where needed/where - combined complex 2/XR" to kt(
+      "select { val e = from(Table(Ent)); where(e.b || if (e.bb) e.bc || e.b else e.num > 1); e.name }"
+    ),
+    "value-fy boolean expression where needed/where - combined complex 2/SQL" to cr(
+      "SELECT e.name AS value FROM Ent e WHERE 1 = e.b OR 1 = e.bb AND (1 = e.bc OR 1 = e.b) OR 1 <> e.bb AND e.num > 1"
+    ),
     "value-fy boolean expression where needed/condition/XR" to kt(
       "Table(Ent).map { e -> Tuple(first = e.name, second = if (e.b == e.bb) e.bc else e.b == e.bb) }"
     ),
@@ -145,7 +175,7 @@ object BooleanLiteralSupportSpecGoldenDynamic: GoldenQueryFile {
       "Table(TestEntity).filter { t -> if ({ val tmp0_elvis_lhs = t.o; if (tmp0_elvis_lhs == null) false else tmp0_elvis_lhs }) false else true }.map { t -> Tuple(first = t.b, second = true) }"
     ),
     "optionals/exists/SQL" to cr(
-      "SELECT t.b AS first, 1 AS second FROM TestEntity t WHERE NOT (CASE WHEN t.o IS NULL THEN 0 ELSE t.o END)"
+      "SELECT t.b AS first, 1 AS second FROM TestEntity t WHERE NOT (t.o IS NULL AND 1 = 0 OR t.o IS NOT NULL AND 1 = t.o)"
     ),
     "optionals/exists - lifted contains/XR" to kt(
       "Table(TestEntity).filter { t -> { val tmp1_elvis_lhs = { val tmp0_safe_receiver = t.o; if (tmp0_safe_receiver == null) null else { it -> it == true }.apply(tmp0_safe_receiver) }; if (tmp1_elvis_lhs == null) false else tmp1_elvis_lhs } }.map { t -> Tuple(first = t.b, second = true) }"
@@ -164,7 +194,7 @@ object BooleanLiteralSupportSpecGoldenDynamic: GoldenQueryFile {
       """Table(TestEntity).filter { t -> { val tmp1_elvis_lhs = { val tmp0_safe_receiver = t.o; if (tmp0_safe_receiver == null) null else { it -> if (TagP("1")) TagP("2") else TagP("0") }.apply(tmp0_safe_receiver) }; if (tmp1_elvis_lhs == null) false else tmp1_elvis_lhs } }.map { t -> Tuple(first = t.b, second = true) }"""
     ),
     "optionals/exists - lifted complex/SQL" to cr(
-      "SELECT t.b AS first, 1 AS second FROM TestEntity t WHERE 1 = CASE WHEN CASE WHEN t.o IS NULL THEN null ELSE CASE WHEN {3:false} THEN {4:false} ELSE {5:true} END END IS NULL THEN 0 ELSE CASE WHEN t.o IS NULL THEN null ELSE CASE WHEN {3:false} THEN {4:false} ELSE {5:true} END END END",
+      "SELECT t.b AS first, 1 AS second FROM TestEntity t WHERE 1 = CASE WHEN CASE WHEN t.o IS NULL THEN null ELSE CASE WHEN 1 = {3:false} THEN {4:false} ELSE {5:true} END END IS NULL THEN 0 ELSE CASE WHEN t.o IS NULL THEN null ELSE CASE WHEN 1 = {3:false} THEN {4:false} ELSE {5:true} END END END",
       "3" to "false", "4" to "false", "5" to "true", "3" to "false", "4" to "false", "5" to "true"
     ),
   )

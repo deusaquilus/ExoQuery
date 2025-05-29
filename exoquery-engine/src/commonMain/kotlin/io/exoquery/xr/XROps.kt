@@ -15,6 +15,19 @@ infix fun XR.Expression._Plus_(other: XR.Expression): XR.BinaryOp = XR.BinaryOp(
 
 inline fun <reified R> Is.Companion.of(vararg possibilities: R): Is<R> = Is.PredicateAs(io.decomat.Typed<R>(), { possibilities.contains(it) })
 
+
+fun isOperatorOnExpressions(op: BinaryOperator) =
+  when (op) {
+    OP.Or, OP.And -> true
+    else -> false
+  }
+
+fun isOperatorOnValues(op: BinaryOperator) =
+  when (op) {
+    OP.EqEq, OP.NotEq, OP.Gt, OP.GtEq, OP.Lt, OP.LtEq -> true
+    else -> false
+  }
+
 fun BinaryOp.oneSideIs(value: XR.Expression): Boolean =
   this.a == value || this.b == value
 
