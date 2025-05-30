@@ -27,6 +27,7 @@ jobs:
 
       # I.e. the presence of this step means that overriding a golden file, not testing against it
       - name: Validate No ExoGoldenOverride Instances
+        if: matrix.os == 'ubuntu-latest' # Windows container does not like this grep. Only need to run it once for the codebase anyway
         uses: freckle/grep-action@dd64f200665b77673185885bd2ef9e72bbd9ecd9
         with:
           # Look for the exact text FORBIDDEN_STRING anywhere in the PR diff
