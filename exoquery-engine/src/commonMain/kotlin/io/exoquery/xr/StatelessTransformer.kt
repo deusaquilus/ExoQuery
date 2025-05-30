@@ -45,7 +45,7 @@ interface StatelessTransformer {
   operator fun invoke(xr: GlobalCall): GlobalCall = with(xr) { GlobalCall.csf(name, args.map { invoke(it) })(this) }
   operator fun invoke(xr: MethodCall): MethodCall = with(xr) { MethodCall.csf(invoke(head), name, args.map { invoke(it) })(this) }
   operator fun invoke(xr: XR.Free): Free = with(xr) { Free.csf(parts, params.map { invoke(it) })(this) }
-  operator fun invoke(xr: XR.Window): XR.Window = with(xr) { Window.csf(partitionBy, orderBy, over)(this) }
+  operator fun invoke(xr: XR.Window): XR.Window = with(xr) { Window.csf(partitionBy.map { invoke(it) }, orderBy.map { invoke(it) }, invoke(over))(this) }
 
   operator fun invoke(xr: XR.Expression): XR.Expression =
     with(xr) {

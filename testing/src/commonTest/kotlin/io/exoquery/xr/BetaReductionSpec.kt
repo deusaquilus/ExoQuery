@@ -141,7 +141,6 @@ class BetaReductionSpec: FreeSpec({
   }
 
   "function reduction" - {
-
     "functionN" {
       val ast: XR =
         FunctionN(listOf(Ident("a"), Ident("b")), BinaryOp(Ident("a"), OP.Plus, Ident("b")))
@@ -151,6 +150,29 @@ class BetaReductionSpec: FreeSpec({
         BinaryOp(Ident("aa"), OP.Plus, Ident("b"))
       )
     }
+  }
+
+  "window reduction" - {
+    "window function" {
+      val ast: XR = Window(
+        listOf(Ident("a"), Ident("b")),
+        listOf(XR.OrderField.By(Ident("c"), Ordering.Asc), XR.OrderField.Implicit(Ident("d"))),
+        Ident("e")
+      )
+      BetaReduction.ofXR(
+        ast,
+        Ident("a") to Ident("a'"),
+        Ident("b") to Ident("b'"),
+        Ident("c") to Ident("c'"),
+        Ident("d") to Ident("d'"),
+        Ident("e") to Ident("e'")
+      ) shouldBe Window(
+        listOf(Ident("a'"), Ident("b'")),
+        listOf(XR.OrderField.By(Ident("c'"), Ordering.Asc), XR.OrderField.Implicit(Ident("d'"))),
+        Ident("e'")
+      )
+    }
+
   }
 
   "doesn't shadow identifiers" - {
