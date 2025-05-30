@@ -2,6 +2,7 @@ package io.exoquery.plugin.printing
 
 import io.exoquery.fansi.Color.Green
 import io.exoquery.fansi.Color.Red
+import io.exoquery.plugin.fullName
 import io.exoquery.plugin.safeName
 import org.jetbrains.kotlin.com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -309,7 +310,7 @@ class RenderIrElementVisitorSimple(normalizeNames: Boolean = false, private val 
 
   override fun visitCall(expression: IrCall, data: Nothing?): String {
     val reciever =
-      expression.dispatchReceiver?.let { "dispatch=${it.type.classFqName?.asString()}" } ?: expression.extensionReceiver?.let { "extension=${it.type.classFqName?.asString()}" } ?: "<>"
+      expression.dispatchReceiver?.let { "dispatch=${it.type.classFqName?.asString()}" } ?: expression.extensionReceiver?.let { "extension=${it.type.classFqName?.asString()}" } ?: "<root:${expression.symbol.fullName}>"
 
     //return "[IrCall] ${expression.symbol.safeName} "
     // This doesn't seem to fail, only the Fansi thing!

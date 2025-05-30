@@ -2,8 +2,9 @@ package io.exoquery
 
 import io.exoquery.printing.GoldenResult
 import io.exoquery.printing.cr
+import io.exoquery.printing.kt
 
-object ParamReqGoldenDynamic : GoldenQueryFile {
+object ParamReqGoldenDynamic: GoldenQueryFile {
   override val queries = mapOf<String, GoldenResult>(
     "single single-param/compileTime/Original SQL" to cr(
       "SELECT p.id, p.name, p.age FROM Person p WHERE p.name = ?"
@@ -95,6 +96,42 @@ object ParamReqGoldenDynamic : GoldenQueryFile {
     ),
     "one single, one multi/runtime/Params" to cr(
       "[ParamSingle(0, Joe, String), ParamMulti(1, [42, 43], Int)]"
+    ),
+    "datatypes/LocalDate comparison/Original SQL" to cr(
+      "SELECT c.name AS value FROM Client c WHERE c.birthDate > ? OR c.birthDate >= ? OR c.birthDate < ? OR c.birthDate <= ?"
+    ),
+    "datatypes/LocalDate comparison/Determinized SQL" to cr(
+      "SELECT c.name AS value FROM Client c WHERE c.birthDate > ? OR c.birthDate >= ? OR c.birthDate < ? OR c.birthDate <= ?"
+    ),
+    "datatypes/LocalDate comparison/Params" to cr(
+      "[ParamSingle(0, 2000-01-01, LocalDate), ParamSingle(1, 2000-01-01, LocalDate), ParamSingle(2, 2000-01-01, LocalDate), ParamSingle(3, 2000-01-01, LocalDate)]"
+    ),
+    "datatypes/LocalTime comparison/Original SQL" to cr(
+      "SELECT c.name AS value FROM Client c WHERE c.birthTime > ? OR c.birthTime >= ? OR c.birthTime < ? OR c.birthTime <= ?"
+    ),
+    "datatypes/LocalTime comparison/Determinized SQL" to cr(
+      "SELECT c.name AS value FROM Client c WHERE c.birthTime > ? OR c.birthTime >= ? OR c.birthTime < ? OR c.birthTime <= ?"
+    ),
+    "datatypes/LocalTime comparison/Params" to cr(
+      "[ParamSingle(0, 12:00, LocalTime), ParamSingle(1, 12:00, LocalTime), ParamSingle(2, 12:00, LocalTime), ParamSingle(3, 12:00, LocalTime)]"
+    ),
+    "datatypes/LocalDateTime comparison/Original SQL" to cr(
+      "SELECT c.name AS value FROM Client c WHERE c.birthDateTime > ? OR c.birthDateTime >= ? OR c.birthDateTime < ? OR c.birthDateTime <= ?"
+    ),
+    "datatypes/LocalDateTime comparison/Determinized SQL" to cr(
+      "SELECT c.name AS value FROM Client c WHERE c.birthDateTime > ? OR c.birthDateTime >= ? OR c.birthDateTime < ? OR c.birthDateTime <= ?"
+    ),
+    "datatypes/LocalDateTime comparison/Params" to cr(
+      "[ParamSingle(0, 2000-01-01T12:00, LocalDateTime), ParamSingle(1, 2000-01-01T12:00, LocalDateTime), ParamSingle(2, 2000-01-01T12:00, LocalDateTime), ParamSingle(3, 2000-01-01T12:00, LocalDateTime)]"
+    ),
+    "datatypes/Instant comparison/Original SQL" to cr(
+      "SELECT c.name AS value FROM Client c WHERE c.birthInstant > ? OR c.birthInstant >= ? OR c.birthInstant < ? OR c.birthInstant <= ?"
+    ),
+    "datatypes/Instant comparison/Determinized SQL" to cr(
+      "SELECT c.name AS value FROM Client c WHERE c.birthInstant > ? OR c.birthInstant >= ? OR c.birthInstant < ? OR c.birthInstant <= ?"
+    ),
+    "datatypes/Instant comparison/Params" to cr(
+      "[ParamSingle(0, 2000-01-01T00:00:00Z, Instant), ParamSingle(1, 2000-01-01T00:00:00Z, Instant), ParamSingle(2, 2000-01-01T00:00:00Z, Instant), ParamSingle(3, 2000-01-01T00:00:00Z, Instant)]"
     ),
   )
 }

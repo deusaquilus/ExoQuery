@@ -3,7 +3,6 @@ package io.exoquery
 import io.exoquery.sql.PostgresDialect
 import io.exoquery.testdata.Person
 
-
 class ParamReq: GoldenSpecDynamic(ParamReqGoldenDynamic, Mode.ExoGoldenTest(), {
   "single single-param" - {
     val n = "Leah"
@@ -89,6 +88,61 @@ class ParamReq: GoldenSpecDynamic(ParamReqGoldenDynamic, Mode.ExoGoldenTest(), {
       shouldBeGolden(buildRuntime.token.build(), "Original SQL")
       shouldBeGolden(buildRuntime.determinizeDynamics().token.build(), "Determinized SQL")
       shouldBeGolden(buildRuntime.determinizeDynamics().params.toString(), "Params")
+    }
+  }
+
+  "datatypes" - {
+    "LocalDate comparison" {
+      data class Client(val name: String, val birthDate: kotlinx.datetime.LocalDate)
+      val test = kotlinx.datetime.LocalDate(2000, 1, 1)
+      val q = capture.select {
+        val c = from(Table<Client>())
+        where { c.birthDate > param(test) || c.birthDate >= param(test) || c.birthDate < param(test) || c.birthDate <= param(test) }
+        c.name
+      }
+      val build = q.buildFor.Postgres()
+      shouldBeGolden(build.token.build(), "Original SQL")
+      shouldBeGolden(build.determinizeDynamics().token.build(), "Determinized SQL")
+      shouldBeGolden(build.determinizeDynamics().params.toString(), "Params")
+    }
+    "LocalTime comparison" {
+      data class Client(val name: String, val birthTime: kotlinx.datetime.LocalTime)
+      val test = kotlinx.datetime.LocalTime(12, 0, 0)
+      val q = capture.select {
+        val c = from(Table<Client>())
+        where { c.birthTime > param(test) || c.birthTime >= param(test) || c.birthTime < param(test) || c.birthTime <= param(test) }
+        c.name
+      }
+      val build = q.buildFor.Postgres()
+      shouldBeGolden(build.token.build(), "Original SQL")
+      shouldBeGolden(build.determinizeDynamics().token.build(), "Determinized SQL")
+      shouldBeGolden(build.determinizeDynamics().params.toString(), "Params")
+    }
+    "LocalDateTime comparison" {
+      data class Client(val name: String, val birthDateTime: kotlinx.datetime.LocalDateTime)
+      val test = kotlinx.datetime.LocalDateTime(2000, 1, 1, 12, 0, 0)
+      val q = capture.select {
+        val c = from(Table<Client>())
+        where { c.birthDateTime > param(test) || c.birthDateTime >= param(test) || c.birthDateTime < param(test) || c.birthDateTime <= param(test) }
+        c.name
+      }
+      val build = q.buildFor.Postgres()
+      shouldBeGolden(build.token.build(), "Original SQL")
+      shouldBeGolden(build.determinizeDynamics().token.build(), "Determinized SQL")
+      shouldBeGolden(build.determinizeDynamics().params.toString(), "Params")
+    }
+    "Instant comparison" {
+      data class Client(val name: String, val birthInstant: kotlinx.datetime.Instant)
+      val test = kotlinx.datetime.Instant.fromEpochSeconds(946684800) // 2000-01-01T00:00:00Z
+      val q = capture.select {
+        val c = from(Table<Client>())
+        where { c.birthInstant > param(test) || c.birthInstant >= param(test) || c.birthInstant < param(test) || c.birthInstant <= param(test) }
+        c.name
+      }
+      val build = q.buildFor.Postgres()
+      shouldBeGolden(build.token.build(), "Original SQL")
+      shouldBeGolden(build.determinizeDynamics().token.build(), "Determinized SQL")
+      shouldBeGolden(build.determinizeDynamics().params.toString(), "Params")
     }
   }
 })

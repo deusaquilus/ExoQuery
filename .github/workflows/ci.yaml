@@ -1,6 +1,7 @@
 name: CI
 
-on: [ pull_request, push ]
+# Was also `push`, but now only runs on PRs since we don't want build twice
+on: [ pull_request ]
 
 jobs:
   build:

@@ -275,7 +275,7 @@ object ParseExpression {
               getSerializerForType(irType)?.let { ParamBind.Type.ParamListStatic(it) }
                 ?: getSerializerForValueClass(expr.type, expr.location())?.let { ParamBind.Type.ParamListCustom(it, expr.type) }
                 ?: parseError(
-                  "Could not find primitive-serializer for type: ${irType.dumpKotlinLike()}. Primitive serializers are only defined for: Int, Long, Float, Double, String, Boolean, and the kotlinx LocalDate, LocalTime, LocalDateTime, and Instant",
+                  "Could not find primitive-serializer for type: ${irType.dumpKotlinLike()}. Primitive serializers are only defined for: Int, Long, Float, Double, String, Boolean, and the kotlinx/java.time LocalDate, LocalTime, LocalDateTime, and Instant",
                   this
                 )
             }
@@ -357,29 +357,23 @@ object ParseExpression {
           },
         ) ?: parseError(Messages.CannotCallUseOnAnArbitraryDynamic(), sqlExprIr)
       },
-      // Binary Operators
-      case(ExtractorsDomain.Call.`x op y`[Is()]).thenThis { opCall ->
-        fun IrExpression.isGetTemporaryVar() =
-          (this as? IrGetValue)?.symbol?.owner?.origin == IrDeclarationOrigin.IR_TEMPORARY_VARIABLE
 
+      case(ExtractorsDomain.Call.`x compareableOp y`[Is()]).thenThis { opCall ->
         val (xExpr, op, yExpr) = opCall
         val x = parse(xExpr)
         val y = parse(yExpr)
         val output = XR.BinaryOp(x, op, y, expr.loc)
+        ensureIsValidOp(expr, xExpr, yExpr, x, y, output)
+        output
+      },
 
-        if (y.type.isProduct() && !(x is XR.Const.Null && yExpr.isGetTemporaryVar())) {
-          parseError(
-            "Invalid right-hand-side argument ${y.show()} (whose type was ${y.type.shortString()}) in the expression ${output.show()}. Cannot directly call operators (including null-checks) on variables representing composite types (i.e. rows-types and anything representing a group of columns) because this cannot be done in SQL. Instead, call the null-check on a column variable.",
-            expr
-          )
-        }
-        if (x.type.isProduct() && !(y is XR.Const.Null && xExpr.isGetTemporaryVar())) {
-          parseError(
-            "Invalid left-hand-side argument ${x.show()} (whose type was ${x.type.shortString()}) in the expression ${output.show()}.  Cannot directly call operators (including null-checks) on variables representing composite types (i.e. rows-types and anything representing a group of columns) because this cannot be done in SQL. Instead, call the null-check on a column variable.",
-            expr
-          )
-        }
-
+      // Binary Operators
+      case(ExtractorsDomain.Call.`x op y`[Is()]).thenThis { opCall ->
+        val (xExpr, op, yExpr) = opCall
+        val x = parse(xExpr)
+        val y = parse(yExpr)
+        val output = XR.BinaryOp(x, op, y, expr.loc)
+        ensureIsValidOp(expr, xExpr, yExpr, x, y, output)
         output
       },
 

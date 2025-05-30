@@ -20,8 +20,10 @@ import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrDeclarationReference
 import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.name.ClassId
 
@@ -151,9 +153,24 @@ fun getSerializerForType(type: IrType): ClassId? = run {
     type.isNullableNothing() -> classIdOf<ParamSerializer.NullType>()
     type.isNullableString() -> classIdOf<ParamSerializer.String>()
     type.isString() -> classIdOf<ParamSerializer.String>()
-    type.isClassStrict<LocalDate>() -> classIdOf<LocalDate>()
-    type.isClassStrict<LocalTime>() -> classIdOf<LocalTime>()
-    type.isClassStrict<LocalDateTime>() -> classIdOf<LocalDateTime>()
+    type.isClassStrict<kotlinx.datetime.LocalDate>() -> classIdOf<ParamSerializer.LocalDate>()
+    type.isClassStrict<kotlinx.datetime.LocalTime>() -> classIdOf<ParamSerializer.LocalTime>()
+    type.isClassStrict<kotlinx.datetime.LocalDateTime>() -> classIdOf<ParamSerializer.LocalDateTime>()
+    type.isClassStrict<kotlinx.datetime.Instant>() -> classIdOf<ParamSerializer.Instant>()
+
+    //type.isClassStrict<java.util.Date>() -> classIdOf<ParamSerializer.Date>(),
+
+    /*
+    val JDateEncoder: SqlEncoder<Session, Stmt, Date>
+    val JLocalDateEncoder: SqlEncoder<Session, Stmt, LocalDate>
+    val JLocalTimeEncoder: SqlEncoder<Session, Stmt, LocalTime>
+    val JLocalDateTimeEncoder: SqlEncoder<Session, Stmt, LocalDateTime>
+    val JZonedDateTimeEncoder: SqlEncoder<Session, Stmt, ZonedDateTime>
+    val JInstantEncoder: SqlEncoder<Session, Stmt, Instant>
+    val JOffsetTimeEncoder: SqlEncoder<Session, Stmt, OffsetTime>
+    val JOffsetDateTimeEncoder: SqlEncoder<Session, Stmt, OffsetDateTime>
+     */
+
     else -> null
   }
 }
@@ -195,6 +212,23 @@ object ParseFree {
       else -> parseError("Unknown Interpolate function: ${funName}", expr)
     }
   }
+}
 
+context(CX.Scope)
+fun ensureIsValidOp(expr: IrExpression, xExpr: IrExpression, yExpr: IrExpression, x: XR.Expression, y: XR.Expression, output: XR.Expression) {
+  fun IrExpression.isGetTemporaryVar() =
+    (this as? IrGetValue)?.symbol?.owner?.origin == IrDeclarationOrigin.IR_TEMPORARY_VARIABLE
 
+  if (y.type.isProduct() && !(x is XR.Const.Null && yExpr.isGetTemporaryVar())) {
+    parseError(
+      "Invalid right-hand-side argument ${y.show()} (whose type was ${y.type.shortString()}) in the expression ${output.show()}. Cannot directly call operators (including null-checks) on variables representing composite types (i.e. rows-types and anything representing a group of columns) because this cannot be done in SQL. Instead, call the null-check on a column variable.",
+      expr
+    )
+  }
+  if (x.type.isProduct() && !(y is XR.Const.Null && xExpr.isGetTemporaryVar())) {
+    parseError(
+      "Invalid left-hand-side argument ${x.show()} (whose type was ${x.type.shortString()}) in the expression ${output.show()}.  Cannot directly call operators (including null-checks) on variables representing composite types (i.e. rows-types and anything representing a group of columns) because this cannot be done in SQL. Instead, call the null-check on a column variable.",
+      expr
+    )
+  }
 }

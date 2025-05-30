@@ -31,10 +31,10 @@ object QueryWindowReqGoldenDynamic: GoldenQueryFile {
       "SELECT p.name AS first, COUNT(p.age) OVER(PARTITION BY p.name ORDER BY p.age) AS second FROM Person p"
     ),
     "paritionBy, orderBy/count star/XR" to kt(
-      "select { val p = from(Table(Person)); Pair(first = p.name, second = window().partitionBy(p.name).orderBy(p.age).over(COUNT(*)_GC())) }"
+      "select { val p = from(Table(Person)); Pair(first = p.name, second = window().partitionBy(p.name).orderBy(p.age).over(COUNT_STAR_GC())) }"
     ),
     "paritionBy, orderBy/count star/SQL" to cr(
-      "SELECT p.name AS first, COUNT(*)() OVER(PARTITION BY p.name ORDER BY p.age) AS second FROM Person p"
+      "SELECT p.name AS first, count(*) OVER(PARTITION BY p.name ORDER BY p.age) AS second FROM Person p"
     ),
     "just partitionBy/rank/XR" to kt(
       "select { val p = from(Table(Person)); Pair(first = p.name, second = window().partitionBy(p.name).orderBy().over(RANK_GC())) }"

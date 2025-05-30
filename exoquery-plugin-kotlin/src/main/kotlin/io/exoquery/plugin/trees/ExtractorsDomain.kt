@@ -445,6 +445,31 @@ object ExtractorsDomain {
         }
     }
 
+    object `x compareableOp y` {
+      private val gt = "kotlin.internal.ir.greater"
+      private val lt = "kotlin.internal.ir.less"
+      private val ge = "kotlin.internal.ir.greaterOrEqual"
+      private val le = "kotlin.internal.ir.lessOrEqual"
+      private val IsOp = Is<String> { it == gt || it == lt || it == ge || it == le }
+
+      context(CX.Scope) operator fun <AP : Pattern<OperatorCall>> get(x: AP) =
+        customPattern1("x compareableOp y", x) { it: IrCall ->
+          on(it).match(
+            // Ir.Const[Is(Ir.Const.Value.Int(0))]
+            case(Ir.Call.FunctionUntethered2[IsOp, Ir.Call.FunctionMem1[Is(), Is("compareTo"), Is()], Is()]).thenThis { (a, b), _ ->
+              val op =
+                when (symbol.fullName) {
+                  gt -> OP.Gt
+                  lt -> OP.Lt
+                  ge -> OP.GtEq
+                  le -> OP.LtEq
+                  else -> parseError("Unknown compareable operator: ${symbol.safeName}", this)
+                }
+              Components1(OperatorCall(a, op, b))
+          })
+        }
+    }
+
     object `x op y` {
       context(CX.Scope) operator fun <AP : Pattern<OperatorCall>> get(x: AP) =
         customPattern1("x op y", x) { it: IrCall ->

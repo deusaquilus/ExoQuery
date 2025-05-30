@@ -2,7 +2,7 @@ package io.exoquery
 
 import io.exoquery.sql.PostgresDialect
 
-class QueryWindowReq: GoldenSpecDynamic(GoldenQueryFile.Empty, Mode.ExoGoldenOverride(), {
+class QueryWindowReq: GoldenSpecDynamic(QueryWindowReqGoldenDynamic, Mode.ExoGoldenTest(), {
   data class Person(val id: Int, val name: String, val age: Int)
   "paritionBy, orderBy" - {
     "rank" {
