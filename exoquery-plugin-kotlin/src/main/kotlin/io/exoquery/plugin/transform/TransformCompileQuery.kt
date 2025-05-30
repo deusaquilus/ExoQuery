@@ -79,8 +79,7 @@ class TransformCompileQuery(val superTransformer: VisitTransformExpressions) : T
 
     // recurse down into the expression in order to make it into an Uprootable if needed
     return expr.match(
-      case(SqlBuildFunction[Is(), Is()]).thenThis { sqlQueryExprRaw, dialectType ->
-        val isPretty = expr.symbol.safeName == "buildPretty"
+      case(SqlBuildFunction[Is()]).thenThis { (sqlQueryExprRaw, dialectType, isPretty) ->
         val parsedArgs = extractArgsFromCall(expr)
 
         val compileLocation = expr.location(currentFile.fileEntry)

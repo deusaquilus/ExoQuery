@@ -32,7 +32,7 @@ sealed interface ActionKind {
  * val result: List<Person> = myQuery.buildFor.Postgres().runOn(controller)
  * ```
  */
-data class SqlCompiledQuery<T>(val value: String, override val token: Token, val needsTokenization: Boolean, val label: String?, val debugData: SqlCompiledQuery.DebugData) : ExoCompiled() {
+data class SqlCompiledQuery<T>(override val value: String, override val token: Token, val needsTokenization: Boolean, val label: String?, val debugData: SqlCompiledQuery.DebugData) : ExoCompiled() {
   override val params: List<Param<*>> by lazy { token.extractParams() }
 
   // Similar concept tot the SqlQuery/SqlExpression.determinizeDynamics but it does not need to consider any nesting constructs
@@ -45,7 +45,7 @@ data class SqlCompiledQuery<T>(val value: String, override val token: Token, val
 }
 
 data class SqlCompiledAction<Input, Output>(
-  val value: String,
+  override val value: String,
   override val token: Token,
   val needsTokenization: Boolean,
   val actionKind: ActionKind,
@@ -74,7 +74,7 @@ data class BatchParamGroup<BatchInput, Input : Any, Output>(val input: BatchInpu
 
 // TODO since we're providing the batch-parameter at the last moment, we need a function that replaces ParamBatchRefiner to ParamSingle instances and create BatchGroups
 data class SqlCompiledBatchAction<BatchInput, Input : Any, Output>(
-  val value: String,
+  override val value: String,
   override val token: Token,
   val needsTokenization: Boolean,
   val actionKind: ActionKind,
@@ -121,6 +121,7 @@ data class SqlCompiledBatchAction<BatchInput, Input : Any, Output>(
 }
 
 abstract class ExoCompiled {
+  abstract val value: String
   abstract val params: List<Param<*>>
   abstract val token: Token
 

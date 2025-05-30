@@ -27,6 +27,8 @@ object ExtractorsDomain {
   fun IsSelectFunction() = Ir.Expr.ClassOf<SelectClauseCapturedBlock>()
 
   object SqlBuildFunction {
+    data class Data(val sqlQueryExpr: IrExpression, val dialectType: IrType, val isPretty: Boolean)
+
     fun isNamedCorrectly(name: String) = name == "build" || name == "buildPretty"
 
     context(CX.Scope)
@@ -40,20 +42,21 @@ object ExtractorsDomain {
         ?: false) && isNamedCorrectly(expr.symbol.safeName) || expr.ownerHasAnnotation<ExoBuildDatabaseSpecific>()
 
     context(CX.Scope, CX.Symbology)
-    operator fun <AP : Pattern<IrExpression>, BP : Pattern<IrType>> get(x: AP, y: BP) =
-      customPattern2("SqlBuildFunction", x, y) { call: IrCall ->
+    operator fun <AP : Pattern<Data>> get(x: AP) =
+      customPattern1("SqlBuildFunction", x) { call: IrCall ->
         if (!matches(call))
           null
         else call.match(
           case(Ir.Call.FunctionMemN[Is(), Is { isNamedCorrectly(it) }, Is(/*Args that we don't match on here*/)]).thenIf { sqlQueryExpr, _ -> isCompileableType(sqlQueryExpr.type) }.thenThis { sqlQueryExpr, _ ->
+            val isPretty = call.symbol.safeName == "buildPretty"
             val dialectType = this.typeArguments.first() ?: parseError(
               "Need to pass a constructable dialect to the build method but no argument was provided",
               sqlQueryExpr
             )
-            Components2(sqlQueryExpr, dialectType)
+            Components1(Data(sqlQueryExpr, dialectType, isPretty))
           },
-          // The query.buildFor.Postgres() veriety
-          case(Ir.Call.FunctionMemN[Ir.Call.FunctionMemN[Is(), Is(), Is()], Is(), Is()]).thenIfThis { _, _ -> ownerHasAnnotation<ExoBuildDatabaseSpecific>() }
+          // The query.buildFor.Postgres() variety
+          case(Ir.Call.FunctionMemN[Ir.Call.FunctionMemN[Is(), Is { it == "buildFor" || it == "buildPrettyFor" }, Is()], Is(), Is()]).thenIfThis { _, _ -> ownerHasAnnotation<ExoBuildDatabaseSpecific>() }
             .thenIf { (sqlQueryExpr, _), _ -> isCompileableType(sqlQueryExpr.type) }
             .thenThis { (sqlQueryExpr, _), _ ->
               // Get the ExoBuildDatabaseSpecific from the Postgers() function call, then get it's Dialect::class type
@@ -64,8 +67,15 @@ object ExtractorsDomain {
                   "ExoBuildDatabaseSpecific annotation must have a single argument that is a class-reference (e.g. PostgresDialect::class)",
                   this
                 )
+              val isPretty =
+                ((call.extensionReceiver ?: call.dispatchReceiver) as? IrCall)?.let {
+                  if (it.symbol.safeName == "buildPrettyFor") true
+                  else if (it.symbol.safeName == "buildFor") false
+                  else parseError("Invalid buildFor function name: ${it.symbol.safeName}", it)
+                } ?: parseError("Build function receiver was null, call", call)
+
               val dialectType = dialectTypeRef.classType
-              Components2(sqlQueryExpr, dialectType)
+              Components1(Data(sqlQueryExpr, dialectType, isPretty))
             }
         )
       }
