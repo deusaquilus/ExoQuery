@@ -3,6 +3,10 @@ name: CI
 # Was also `push`, but now only runs on PRs since we don't want build twice
 on: [ pull_request ]
 
+permissions:
+  contents: read       # Only need to read repository contents
+  pull-requests: write # Needed to add annotations to PRs
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -22,7 +26,7 @@ jobs:
 
       # I.e. the presence of this step means that overriding a golden file, not testing against it
       - name: Validate No ExoGoldenOverride Instances
-        uses: freckle/grep-action@v1
+        uses: freckle/grep-action@dd64f200665b77673185885bd2ef9e72bbd9ecd9
         with:
           # Look for the exact text FORBIDDEN_STRING anywhere in the PR diff
           patterns: |
@@ -32,7 +36,6 @@ jobs:
               title: Presence of Mode.ExoGoldenOverride() Detected
               message: |
                 Please remove every occurrence of the Mode.ExoGoldenOverride() before merging.
-          failure-threshold: failure
           only-changed: false
 
       - name: 'Run Jdbc, Android, and Native-Linux Tests'
