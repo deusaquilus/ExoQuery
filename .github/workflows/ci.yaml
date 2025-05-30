@@ -22,7 +22,7 @@ jobs:
 
       # I.e. the presence of this step means that overriding a golden file, not testing against it
       - name: Validate No ExoGoldenOverride Instances
-      - uses: freckle/grep-action@v1
+        uses: freckle/grep-action@v1
         with:
           # Look for the exact text FORBIDDEN_STRING anywhere in the PR diff
           patterns: |
