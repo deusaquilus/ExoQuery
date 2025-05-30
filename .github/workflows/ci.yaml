@@ -6,6 +6,7 @@ on: [ pull_request ]
 permissions:
   contents: read       # Only need to read repository contents
   pull-requests: write # Needed to add annotations to PRs
+  checks: write
 
 jobs:
   build:
