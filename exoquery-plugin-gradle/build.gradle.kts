@@ -16,6 +16,7 @@ kotlin {
   jvmToolchain(17)
 }
 
+val runtimeVersion = extra["pluginProjectVersion"].toString()
 val decomatVersion = extra["decomatVersion"]
 val serializationVersion = libs.versions.serialization.get()
 
@@ -26,6 +27,8 @@ buildConfig {
 }
 
 dependencies {
+  api("io.exoquery:exoquery-engine:${runtimeVersion}")
+
   implementation(kotlin("gradle-plugin-api"))
 }
 

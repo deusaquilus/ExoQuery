@@ -63,5 +63,26 @@ enum class ExoCliOption(
     "<projectDir>",
     "path to gradle project",
     false
+  ),
+
+  OUTPUT_STRING(
+    "outputString",
+    "<outputString>",
+    "override the string printed when a static query is executed use %total and %sql switches to specify",
+    false
+  ),
+
+  QUERY_FILES_ENABLED(
+    "queryFilesEnabled",
+    "<true|false>",
+    "Enables/disables the generation of exo/generated/_.queries.sql query files",
+    false
+  ),
+
+  QUERY_PRINTING_ENABLED(
+    "queryPrintingEnabled",
+    "<true|false>",
+    "Enables/disables the printing of queries during compile-time",
+    false
   )
 }

@@ -29,8 +29,10 @@ object QueryFileBuilder {
       else
         null
 
-    // either way write the queries out to the build directory
-    writeFile(OutputMode.Regular, queryFile)
+    // either way write the queries out to the build directory (if enabled)
+    if (options?.queryFilesEnabled ?: false) {
+      writeFile(OutputMode.Regular, queryFile)
+    }
     // if the resourcesWrite is defined, write the queries out to the resources directory
     if (resourcesWrite != null) {
       writeFile(resourcesWrite, queryFile)

@@ -137,7 +137,9 @@ class TransformCompileQuery(val superTransformer: VisitTransformExpressions) : T
                     accum.addQuery(PrintableQuery(queryString, compileLocation, parsedArgs.queryLabel))
 
                     val msgAdd = parsedArgs.queryLabel?.let { " ($it)" } ?: ""
-                    this@Scope.logger.report("Compiled query in ${compileTime.inWholeMilliseconds}ms${msgAdd}: ${queryString}", expr)
+
+                    if (options?.queryPrintingEnabled ?: false)
+                      this@Scope.logger.report(outputStringMaker.make(compileTime.inWholeMilliseconds, queryString, "query"), expr)
                     SqlCompiledQueryExpr(sqlExpr, queryString, queryTokenized, false, parsedArgs.queryLabel, Phase.CompileTime, uprootable.packedXR, query.encode()).plant()
 
                   }
@@ -172,7 +174,8 @@ class TransformCompileQuery(val superTransformer: VisitTransformExpressions) : T
                 accum.addQuery(PrintableQuery(queryString, compileLocation, parsedArgs.queryLabel))
 
                 val msgAdd = parsedArgs.queryLabel?.let { " ($it)" } ?: ""
-                logger.report("Compiled action in ${compileTime.inWholeMilliseconds}ms: ${queryString}", expr)
+                if (options?.queryPrintingEnabled ?: false)
+                  logger.report(outputStringMaker.make(compileTime.inWholeMilliseconds, queryString, "action"), expr)
 
                 val sqlActionTmpVar = builder.scope.createTmpVariable(sqlExpr)
                 val output = SqlCompiledActionExpr(builder.irGet(sqlActionTmpVar), queryString, queryTokenized, actionKind, actionReturningKind, parsedArgs.queryLabel, Phase.CompileTime, uprootable.packedXR).plant()
@@ -206,7 +209,9 @@ class TransformCompileQuery(val superTransformer: VisitTransformExpressions) : T
                 accum.addQuery(PrintableQuery(queryString, compileLocation, parsedArgs.queryLabel))
 
                 val msgAdd = parsedArgs.queryLabel?.let { " ($it)" } ?: ""
-                logger.report("Compiled batch-action in ${compileTime.inWholeMilliseconds}ms: ${queryString}", expr)
+
+                if (options?.queryPrintingEnabled ?: false)
+                  logger.report(outputStringMaker.make(compileTime.inWholeMilliseconds, queryString, "batch-action"), expr)
 
                 SqlCompiledBatchActionExpr(sqlExpr, queryString, queryTokenized, actionKind, actionReturningKind, parsedArgs.queryLabel, Phase.CompileTime, uprootable.packedXR).plant()
               }

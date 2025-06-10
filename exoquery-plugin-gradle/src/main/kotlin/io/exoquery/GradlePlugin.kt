@@ -1,10 +1,22 @@
 package io.exoquery
 
+import io.exoquery.config.ExoCompileOptions
 import io.exoquery.exoquery_plugin_gradle.BuildConfig
 import org.gradle.api.Project
+import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.plugin.*
 import java.io.File
+
+interface ExoQueryGradlePluginExtension {
+    /** Override the string printed when a static query is executed use %total and %sql switches to specify */
+    val outputString: Property<String>
+    /** Whether to create target/generated/exo/.../_.queries.sql files or not */
+    val queryFilesEnabled: Property<Boolean>
+    /** Whether to print queries at compile-time or not (per the outputString syntax) */
+    val queryPrintingEnabled: Property<Boolean>
+}
+
 
 class GradlePlugin : KotlinCompilerPluginSupportPlugin {
   override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean = true
@@ -23,6 +35,12 @@ class GradlePlugin : KotlinCompilerPluginSupportPlugin {
     //target.plugins.withId("org.jetbrains.kotlin.jvm") {
     //    target.dependencies.add("implementation", "io.exoquery:exoquery-engine:${BuildConfig.VERSION}")
     //}
+
+    target.extensions.create("exoQuery", ExoQueryGradlePluginExtension::class.java).apply {
+      outputString.convention(ExoCompileOptions.DefaultOutputString)
+      queryFilesEnabled.convention(ExoCompileOptions.DefaultQueryFilesEnabled)
+      queryPrintingEnabled.convention(ExoCompileOptions.DefaultQueryPrintingEnabled)
+    }
 
     val isMultiplatform = target.plugins.hasPlugin("org.jetbrains.kotlin.multiplatform")
     val sourceSetName = if (isMultiplatform) "commonMain" else "main"
@@ -55,6 +73,9 @@ class GradlePlugin : KotlinCompilerPluginSupportPlugin {
   override fun applyToCompilation(kotlinCompilation: KotlinCompilation<*>): Provider<List<SubpluginOption>> {
     val project = kotlinCompilation.target.project
 
+    val ext = project.extensions.getByType(ExoQueryGradlePluginExtension::class.java)
+
+
     // ALSO needed for the plugin classpath
     kotlinCompilation.dependencies {
       api("io.exoquery:exoquery-engine:${BuildConfig.VERSION}")
@@ -65,6 +86,10 @@ class GradlePlugin : KotlinCompilerPluginSupportPlugin {
     // because the builds don't actually build commonMain as a compile-target, only the actual platforms
     val sourceSetName = kotlinCompilation.defaultSourceSet.name
 
+    val outputStringValue = ext.outputString.convention(ExoCompileOptions.DefaultOutputString).get()
+    val queryFilesEnabled = ext.queryFilesEnabled.convention(ExoCompileOptions.DefaultQueryFilesEnabled).get()
+    val queryPrintingEnabled = ext.queryPrintingEnabled.convention(ExoCompileOptions.DefaultQueryPrintingEnabled).get()
+
     return project.provider {
       listOf(
         SubpluginOption("generationDir", project.layout.buildDirectory.file("generated/exo/").get().asFile.absolutePath),
@@ -74,7 +99,10 @@ class GradlePlugin : KotlinCompilerPluginSupportPlugin {
         SubpluginOption("projectDir", project.projectDir.path),
         SubpluginOption("projectBaseDir", project.project.projectDir.canonicalPath),
         SubpluginOption("kotlinOutputDir", getKspKotlinOutputDir(project, sourceSetName, target).path),
-        SubpluginOption("resourceOutputDir", getKspResourceOutputDir(project, sourceSetName, target).path)
+        SubpluginOption("resourceOutputDir", getKspResourceOutputDir(project, sourceSetName, target).path),
+        SubpluginOption("outputString", outputStringValue),
+        SubpluginOption("queryFilesEnabled", queryFilesEnabled.toString()),
+        SubpluginOption("queryPrintingEnabled", queryPrintingEnabled.toString())
       )
     }
   }

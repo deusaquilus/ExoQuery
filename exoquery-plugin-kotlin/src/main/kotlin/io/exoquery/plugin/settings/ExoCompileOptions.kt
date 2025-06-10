@@ -2,7 +2,6 @@ package io.exoquery.plugin.settings
 
 import io.exoquery.config.ExoCompileOptions
 import org.jetbrains.kotlin.config.CompilerConfigurationKey
-import java.io.File
 
 val EXO_OPTIONS = CompilerConfigurationKey.create<ExoCompileOptionsBuilder>("ExoQuery options")
 
@@ -15,6 +14,10 @@ class ExoCompileOptionsBuilder {
   var kotlinOutputDir: String? = null
   var resourceOutputDir: String? = null
   var projectDir: String? = null
+  var outputString: String? = null
+  var queryFilesEnabled: Boolean? = true
+  var queryPrintingEnabled: Boolean? = true
+
 
   fun build(): ExoCompileOptions {
     return ExoCompileOptions(
@@ -25,7 +28,10 @@ class ExoCompileOptionsBuilder {
       requireNotNull(projectBaseDir) { "A non-null projectBaseDir must be provided" },
       requireNotNull(kotlinOutputDir) { "A non-null kotlinOutputDir must be provided" },
       requireNotNull(resourceOutputDir) { "A non-null resourceOutputDir must be provided" },
-      requireNotNull(projectDir) { "A non-null projectDir must be provided" }
+      requireNotNull(projectDir) { "A non-null projectDir must be provided" },
+      outputString ?: ExoCompileOptions.DefaultOutputString,
+      queryFilesEnabled ?: ExoCompileOptions.DefaultQueryFilesEnabled,
+      queryPrintingEnabled ?: ExoCompileOptions.DefaultQueryPrintingEnabled,
     )
   }
 }
@@ -39,4 +45,7 @@ fun ExoCompileOptionsBuilder.processOption(option: ExoCliOption, value: String) 
   ExoCliOption.KOTLIN_OUTPUT_DIR_OPTION -> kotlinOutputDir = value
   ExoCliOption.RESOURCE_OUTPUT_DIR_OPTION -> resourceOutputDir = value
   ExoCliOption.PROJECT_DIR_KEY -> projectDir = value
+  ExoCliOption.OUTPUT_STRING -> outputString = value
+  ExoCliOption.QUERY_FILES_ENABLED -> queryFilesEnabled = value.toBoolean()
+  ExoCliOption.QUERY_PRINTING_ENABLED -> queryPrintingEnabled = value.toBoolean()
 }

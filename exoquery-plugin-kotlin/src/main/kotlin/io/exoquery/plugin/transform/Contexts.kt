@@ -1,6 +1,7 @@
 package io.exoquery.plugin.transform
 
 import io.exoquery.config.ExoCompileOptions
+import io.exoquery.config.OutputStringMaker
 import io.exoquery.parseError
 import io.exoquery.plugin.logging.CompileLogger
 import io.exoquery.plugin.trees.DynamicsAccum
@@ -41,6 +42,8 @@ object CX {
     val debugDataConfig: DebugDataConfig = DebugDataConfig()
   ) {
     fun currentDeclarationParentOrFail() = currentDeclarationParent ?: parseError("Cannot get parent of the current declaration", currentExpr)
+
+    val outputStringMaker = options?.outputStringMaker ?: OutputStringMaker.Default
 
     val compileLogger get() = logger
     val typeSystem by lazy {

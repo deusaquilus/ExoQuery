@@ -84,6 +84,15 @@ repositories {
   mavenLocal()
 }
 
+exoQuery {
+  // CANNOT HAVE LINEBREAKS, will throw `Wrong plugin option format: null, should be plugin:<pluginId>:<optionName>=<value>`
+  outputString.set("%{br}==== Compiled %{kind} in %{total}ms: ====%{br}%{sql}")
+}
+
+//extensions.configure<io.exoquery.ExoQueryGradlePluginExtension> {
+//  outputString.set("FOOBAR\nin %{total}ms: %{queryString}")
+//}
+
 dependencies {
   // These settings are set in GradlePlugin.kt. Otherwise would need to set them here:
   //kotlinNativeCompilerPluginClasspath("io.exoquery:terpal-runtime:${...}")
