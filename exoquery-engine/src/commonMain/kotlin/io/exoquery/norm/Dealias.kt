@@ -107,7 +107,7 @@ data class Dealias(override val state: XR.Ident?, val traceConfig: TraceConfig) 
     val (an, t) = invoke(a)
     val alias = t.state
     return when {
-      alias != null -> {
+      alias != null && alias.name != XR.Ident.Unused.name -> {
         val retypedAlias = alias.copy(type = b.type)
         trace("Dealias (Q/Expr) $b into $retypedAlias").andLog()
         DealiasResultA(an, retypedAlias, BetaReduction(c, b to retypedAlias).asExpr(), t)

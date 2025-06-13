@@ -132,5 +132,23 @@ object QueryReqGoldenDynamic: GoldenQueryFile {
     "query with free in captured function - receiver position" to cr(
       "(SELECT p.id AS id, p.name AS name, p.age AS age FROM Person p WHERE p.age > 21) FOR UPDATE"
     ),
+    "flat joins inside subquery/where/XR" to kt(
+      "select { val p = from(Table(Person)); val innerRobot = join(select { val r = from(Table(Robot)); where(r.ownerId == p.id); Tuple(first = r.name, second = r.ownerId) }) { r.second == p.id }; Tuple(first = p, second = innerRobot) }"
+    ),
+    "flat joins inside subquery/where" to cr(
+      "SELECT p.id, p.name, p.age, r.first, r.second FROM Person p INNER JOIN (SELECT r.name AS first, r.ownerId AS second FROM Robot r WHERE r.ownerId = p.id) AS r ON r.second = p.id"
+    ),
+    "flat joins inside subquery/groupBy/XR" to kt(
+      "select { val p = from(Table(Person)); val innerRobot = join(select { val r = from(Table(Robot)); groupBy(r.ownerId); Tuple(first = r.name, second = r.ownerId) }) { r.second == p.id }; Tuple(first = p, second = innerRobot) }"
+    ),
+    "flat joins inside subquery/groupBy" to cr(
+      "SELECT p.id, p.name, p.age, r.first, r.second FROM Person p INNER JOIN (SELECT r.name AS first, r.ownerId AS second FROM Robot r GROUP BY r.ownerId) AS r ON r.second = p.id"
+    ),
+    "flat joins inside subquery/sortBy/XR" to kt(
+      "select { val p = from(Table(Person)); val innerRobot = join(select { val r = from(Table(Robot)); sortBy(r.name to Desc); Tuple(first = r.name, second = r.ownerId) }) { r.second == p.id }; Tuple(first = p, second = innerRobot) }"
+    ),
+    "flat joins inside subquery/sortBy" to cr(
+      "SELECT p.id, p.name, p.age, r.first, r.second FROM Person p INNER JOIN (SELECT r.name AS first, r.ownerId AS second FROM Robot r ORDER BY r.name DESC) AS r ON r.second = p.id"
+    ),
   )
 }

@@ -1,9 +1,12 @@
+@file:io.exoquery.annotation.TracesEnabled(io.exoquery.util.TraceType.Standard::class, io.exoquery.util.TraceType.Normalizations::class, io.exoquery.util.TraceType.SqlNormalizations::class)
+
 package io.exoquery
 
 import io.exoquery.annotation.CapturedFunction
 import io.exoquery.sql.PostgresDialect
+import io.exoquery.testdata.Robot
 
-// Note that the 1st time you overwrite the golden file it will still fail because the compile is using teh old version
+// Note that the 1st time you overwrite the golden file it will still fail because the compiler is using the old version
 // Also note that it won't actually override the BasicQuerySanitySpecGolden file unless you change this one
 
 // build the file BasicQuerySanitySpecGolden.kt, is that as the constructor arg
@@ -155,4 +158,55 @@ class QueryReq: GoldenSpecDynamic(QueryReqGoldenDynamic, Mode.ExoGoldenTest(), {
     shouldBeGolden(q.xr, "XR")
     shouldBeGolden(q.build<PostgresDialect>())
   }
+  "flat joins inside subquery" - {
+    // This tests the `is SX.Where` case in XR.SelectClauseToXR.nest making sure that the prevVar is properly passed to outer subclauses
+    "where" {
+      val q = capture.select {
+        val p = from(Table<io.exoquery.testdata.Person>())
+        val innerRobot = join(
+          capture.select {
+            val r = from(Table<Robot>())
+            where { r.ownerId == p.id }
+            r.name to r.ownerId
+          }
+        ) { r -> r.second == p.id }
+        p to innerRobot
+      }
+      shouldBeGolden(q.xr, "XR")
+      shouldBeGolden(q.build<PostgresDialect>())
+    }
+    // This tests the `is SX.GroupBy` case in XR.SelectClauseToXR.nest making sure that the prevVar is properly passed to outer subclauses
+    "groupBy" {
+      val q = capture.select {
+        val p = from(Table<io.exoquery.testdata.Person>())
+        val innerRobot = join(
+          capture.select {
+            val r = from(Table<Robot>())
+            groupBy(r.ownerId)
+            r.name to r.ownerId
+          }
+        ) { r -> r.second == p.id }
+        p to innerRobot
+      }
+      shouldBeGolden(q.xr, "XR")
+      shouldBeGolden(q.build<PostgresDialect>())
+    }
+    // This tests the `is SX.SortBy` case in XR.SelectClauseToXR.nest making sure that the prevVar is properly passed to outer subclauses
+    "sortBy" {
+      val q = capture.select {
+        val p = from(Table<io.exoquery.testdata.Person>())
+        val innerRobot = join(
+          capture.select {
+            val r = from(Table<Robot>())
+            sortBy(r.name to Ord.Desc)
+            r.name to r.ownerId
+          }
+        ) { r -> r.second == p.id }
+        p to innerRobot
+      }
+      shouldBeGolden(q.xr, "XR")
+      shouldBeGolden(q.build<PostgresDialect>())
+    }
+  }
+
 })
